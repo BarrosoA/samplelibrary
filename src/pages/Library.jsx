@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, Disc3 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import PackCard from '../components/PackCard';
 import PackDetail from './PackDetail';
 import AudioPlayer from '../components/AudioPlayer';
@@ -170,8 +170,7 @@ export default function Library() {
           style={{ cursor: 'pointer' }}
           title="Return to library overview"
         >
-          <Disc3 size={20} strokeWidth={2.2} />
-          <span>NO LUV - LIBRARY</span>
+          <span>NO LUV LIBRARY</span>
         </div>
 
         <div className="search-mini">

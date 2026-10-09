@@ -66,13 +66,18 @@ a {
 }
 
 .brand-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Roboto Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   color: #ffffff;
+  user-select: none;
+  line-height: 1;
+  transition: opacity 0.15s ease;
+}
+
+.brand-title:hover {
+  opacity: 0.82;
 }
 
 .search-mini {
