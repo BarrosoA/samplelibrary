@@ -2,11 +2,35 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
-const CREDS_PATH = path.resolve(__dirname, '../../gdrive-credentials.json');
-const ROOT_FOLDER_ID = '1JrqnTUEambLgOM3z4yS2iWhYa3HtgCjh';
+// load environment configuration if present
+const ENV_LOCAL_PATH = path.resolve(__dirname, '../../.env.local');
+let envConfig = {};
+if (fs.existsSync(ENV_LOCAL_PATH)) {
+  const envContent = fs.readFileSync(ENV_LOCAL_PATH, 'utf8');
+  envContent.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const idx = trimmed.indexOf('=');
+      const k = trimmed.slice(0, idx).trim();
+      const v = trimmed.slice(idx + 1).trim();
+      envConfig[k] = v;
+    }
+  });
+}
+
+const CREDS_PATH =
+  envConfig.GDRIVE_CREDENTIALS_PATH ||
+  process.env.GDRIVE_CREDENTIALS_PATH ||
+  path.join(process.env.USERPROFILE || 'C:\\Users\\noluv', '.credentials', 'samplelibrary-gdrive.json');
+
+const ROOT_FOLDER_ID =
+  envConfig.GDRIVE_ROOT_FOLDER_ID ||
+  process.env.GDRIVE_ROOT_FOLDER_ID ||
+  '1JrqnTUEambLgOM3z4yS2iWhYa3HtgCjh';
 
 function getDriveClient() {
   if (!fs.existsSync(CREDS_PATH)) {
+    console.warn(`[GDrive] Credentials file not found at: ${CREDS_PATH}`);
     return null;
   }
   try {
