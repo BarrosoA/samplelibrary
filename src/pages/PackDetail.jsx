@@ -13,6 +13,7 @@ export default function PackDetail({
 
   const tracks = pack.tracks || [];
   const [downloadStates, setDownloadStates] = useState({});
+  const [downloadAllState, setDownloadAllState] = useState('idle');
 
   const handleDownloadTrack = (e, track) => {
     e.stopPropagation();
@@ -31,6 +32,43 @@ export default function PackDetail({
         });
       }, 1400);
     }, 2400);
+  };
+
+  const handleDownloadAll = () => {
+    if (downloadAllState !== 'idle') return;
+
+    // check if pack has a dedicated zip file link
+    const isMockFolder = pack.downloadUrl?.includes('drive/folders/1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u');
+    if (pack.downloadUrl && !isMockFolder) {
+      if (pack.downloadUrl.includes('export=download')) {
+        setDownloadAllState('loading');
+        triggerDirectDownload(pack.downloadUrl);
+        setTimeout(() => {
+          setDownloadAllState('done');
+          setTimeout(() => setDownloadAllState('idle'), 1400);
+        }, 2400);
+      } else {
+        window.open(pack.downloadUrl, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
+    // batch download all tracks directly
+    if (tracks.length === 0) return;
+    setDownloadAllState('loading');
+    tracks.forEach((track, index) => {
+      if (track.downloadUrl) {
+        setTimeout(() => {
+          triggerDirectDownload(track.downloadUrl);
+        }, index * 600);
+      }
+    });
+
+    const totalDelay = Math.max(2400, tracks.length * 600 + 1000);
+    setTimeout(() => {
+      setDownloadAllState('done');
+      setTimeout(() => setDownloadAllState('idle'), 1400);
+    }, totalDelay);
   };
 
   const formatSeconds = (sec) => {
@@ -87,18 +125,30 @@ export default function PackDetail({
               <span>PREVIEW</span>
             </button>
 
-            {pack.downloadUrl && (
-              <a
-                href={pack.downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="action-download-zip-btn"
-                title="Download entire pack from Google Drive"
-              >
-                <FolderArchive size={16} />
-                <span>DOWNLOAD ALL</span>
-              </a>
-            )}
+            <button
+              type="button"
+              className={`action-download-zip-btn ${downloadAllState !== 'idle' ? `is-${downloadAllState}` : ''}`}
+              onClick={handleDownloadAll}
+              disabled={downloadAllState !== 'idle'}
+              title="Download all samples in this pack"
+            >
+              {downloadAllState === 'loading' ? (
+                <>
+                  <Loader2 size={16} className="spin-icon" />
+                  <span>STARTING...</span>
+                </>
+              ) : downloadAllState === 'done' ? (
+                <>
+                  <Check size={16} />
+                  <span>STARTED</span>
+                </>
+              ) : (
+                <>
+                  <FolderArchive size={16} />
+                  <span>DOWNLOAD ALL</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </section>
