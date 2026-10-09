@@ -522,15 +522,28 @@ function readSources() {
   return readJson(dirs().sources, {});
 }
 
+const pathKey = (p) => path.resolve(p).toLowerCase();
+
+// files already in the folder when the feature started count as seen; dates can't tell,
+// because moving a file into the folder keeps its old creation and modified dates
 function readInboxState() {
   const d = dirs();
   let state = readJson(d.inbox, null);
   if (!state) {
-    // everything already in the folder when the feature is first used counts as seen
-    state = { baselineMs: Date.now(), dismissed: {} };
+    state = { baselineMs: Date.now(), seen: listLoopFiles().map((f) => pathKey(f.path)), dismissed: {} };
+    writeJson(d.inbox, state);
+  } else if (!Array.isArray(state.seen)) {
+    state.seen = listLoopFiles()
+      .filter((f) => f.arrivedMs <= state.baselineMs)
+      .map((f) => pathKey(f.path));
     writeJson(d.inbox, state);
   }
   return state;
+}
+
+function isSeenAtStart(state, filePath) {
+  if (!state.seenSet) state.seenSet = new Set(state.seen);
+  return state.seenSet.has(pathKey(filePath));
 }
 
 function dismissInboxFile(filePath) {
@@ -557,6 +570,7 @@ module.exports = {
   adoptKeptMasters,
   readSources,
   readInboxState,
+  isSeenAtStart,
   dismissInboxFile,
   parseAgeDays,
   pruneDeployments,

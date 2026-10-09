@@ -241,7 +241,7 @@ function listInbox() {
 
   const items = [];
   for (const f of media.listLoopFiles()) {
-    if (f.arrivedMs <= state.baselineMs) continue;
+    if (media.isSeenAtStart(state, f.path)) continue;
     if (state.dismissed[f.path] === f.mtimeMs) continue;
     const src = sourceByPath.get(f.path.toLowerCase());
     if (src && src.size === f.size && src.mtimeMs === f.mtimeMs && tracksByKey.has(src.key)) continue;

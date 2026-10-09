@@ -5,6 +5,10 @@ import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
+// vite restarts in the same process, so without this Studio Manager keeps running stale script code
+for (const id of Object.keys(require.cache)) {
+  if (/[\\/]scripts[\\/]lib[\\/]/.test(id)) delete require.cache[id];
+}
 const manager = require('./scripts/lib/catalogue-manager.cjs');
 const media = require('./scripts/lib/media-store.cjs');
 
