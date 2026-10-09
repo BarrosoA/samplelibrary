@@ -291,6 +291,98 @@ function updatePack(packId, updates = {}) {
   return { success: true, pack };
 }
 
+function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
+  const data = loadCatalogue();
+  data.packs = data.packs || [];
+
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'pack';
+  const idSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+
+  const newPack = {
+    id: `pack-${idSlug}`,
+    name: name.toUpperCase(),
+    cover: '/images/pack-1.png',
+    trackCount: 0,
+    description: '',
+    downloadUrl: '',
+    format: 'WAV',
+    license: 'Royalty-Free',
+    tracks: [],
+  };
+
+  data.packs.unshift(newPack);
+  saveCatalogue(data);
+  return { success: true, pack: newPack };
+}
+
+function updatePackCover(packId, tempFilePath, originalFilename) {
+  const data = loadCatalogue();
+  const pack = (data.packs || []).find((p) => p.id === packId);
+  if (!pack) throw new Error(`pack ${packId} not found`);
+
+  const ext = (path.extname(originalFilename || '') || '.png').toLowerCase();
+  const destName = `custom-${pack.id}-${Date.now()}${ext}`;
+  const destPath = path.join(IMAGES_DIR, destName);
+
+  fs.copyFileSync(tempFilePath, destPath);
+
+  // remove previous custom cover if present
+  if (pack.cover && pack.cover.startsWith('/images/custom-')) {
+    const oldCoverFile = path.join(IMAGES_DIR, path.basename(pack.cover));
+    if (fs.existsSync(oldCoverFile)) {
+      try {
+        fs.unlinkSync(oldCoverFile);
+      } catch (e) {}
+    }
+  }
+
+  pack.cover = `/images/${destName}`;
+  saveCatalogue(data);
+  return { success: true, cover: pack.cover, pack };
+}
+
+function addTracksToPack(packId, files) {
+  const data = loadCatalogue();
+  const pack = (data.packs || []).find((p) => p.id === packId);
+  if (!pack) throw new Error(`pack ${packId} not found`);
+
+  if (!pack.tracks) pack.tracks = [];
+
+  const addedTracks = [];
+  files.forEach((file) => {
+    const originalName = file.originalFilename || path.basename(file.filepath || file.path);
+    const tempPath = file.filepath || file.path;
+    const meta = parseAudioMetadataFromFilename(originalName);
+    const duration = probeDuration(tempPath);
+
+    const trackIndex = pack.tracks.length + 1;
+    const trackSlug = `${pack.id.replace(/^pack-/, '')}-${trackIndex}-${Date.now().toString().slice(-3)}`;
+    const previewFilename = `${trackSlug}.mp3`;
+    const previewUrl = encodePreviewMp3(tempPath, previewFilename);
+
+    const newTrack = {
+      id: trackSlug,
+      title: meta.title,
+      bpm: meta.bpm,
+      key: meta.key,
+      instrument: 'Master Sample',
+      duration,
+      previewUrl,
+      downloadUrl: pack.downloadUrl || '',
+      format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
+    };
+
+    pack.tracks.push(newTrack);
+    addedTracks.push(newTrack);
+  });
+
+  saveCatalogue(data);
+  return { success: true, tracks: addedTracks, pack };
+}
+
 module.exports = {
   loadCatalogue,
   saveCatalogue,
@@ -299,9 +391,13 @@ module.exports = {
   reorderTracks,
   deletePack,
   updatePack,
+  createBlankPack,
+  updatePackCover,
+  addTracksToPack,
   importPackFromStaging,
   parseAudioMetadataFromFilename,
   probeDuration,
   encodePreviewMp3,
 };
+
 

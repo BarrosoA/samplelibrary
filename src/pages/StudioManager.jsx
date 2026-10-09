@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   FolderKanban, 
   Plus, 
@@ -10,7 +10,10 @@ import {
   HardDriveUpload,
   AlertCircle,
   CheckCircle2,
-  FolderInput
+  FolderInput,
+  Camera,
+  UploadCloud,
+  Loader2
 } from 'lucide-react';
 import AddPackModal from '../components/AddPackModal';
 
@@ -21,11 +24,18 @@ export default function StudioManager() {
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const [audioObj, setAudioObj] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   // drag state
   const [draggedTrack, setDraggedTrack] = useState(null);
   const [dragOverPackId, setDragOverPackId] = useState(null);
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
+  const [isCoverDragOver, setIsCoverDragOver] = useState(false);
+  const [isAudioZoneDragOver, setIsAudioZoneDragOver] = useState(false);
+
+  const coverInputRef = useRef(null);
+  const audioInputRef = useRef(null);
 
   const fetchCatalogue = useCallback(() => {
     fetch('/tracks.json')
@@ -64,6 +74,101 @@ export default function StudioManager() {
       setIsEditingDesc(false);
     }
   }, [currentPack?.id, currentPack?.name, currentPack?.description]);
+
+  // spawn blank pack immediately
+  const handleCreateNewPack = async () => {
+    try {
+      const res = await fetch('/api/manage/create-pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'UNTITLED PACK' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to spawn new pack');
+      
+      notify('Spawned new pack with default cover. Click title to rename.');
+      await fetchCatalogue();
+      if (data.pack) {
+        setSelectedPackId(data.pack.id);
+        // focus title editing immediately
+        setTimeout(() => setIsEditingTitle(true), 100);
+      }
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
+  const uploadCoverFile = async (file) => {
+    if (!currentPack) return;
+    if (!file.type.startsWith('image/')) {
+      notify('Please select an image file (PNG, JPG, WEBP)', 'error');
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append('packId', currentPack.id);
+      formData.append('cover', file);
+
+      const res = await fetch('/api/manage/upload-cover', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload cover');
+
+      notify('Cover image updated');
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
+  const uploadAudioFiles = async (fileList) => {
+    if (!currentPack) return;
+    const files = Array.from(fileList).filter((f) => {
+      const ext = f.name.toLowerCase();
+      return (
+        f.type.startsWith('audio/') ||
+        ext.endsWith('.wav') ||
+        ext.endsWith('.mp3') ||
+        ext.endsWith('.flac') ||
+        ext.endsWith('.aiff') ||
+        ext.endsWith('.m4a')
+      );
+    });
+
+    if (files.length === 0) {
+      notify('No valid audio files found (WAV, MP3, FLAC)', 'error');
+      return;
+    }
+
+    setIsUploadingAudio(true);
+    try {
+      const formData = new FormData();
+      formData.append('packId', currentPack.id);
+      files.forEach((file) => formData.append('tracks', file));
+
+      const res = await fetch('/api/manage/upload-tracks', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add audio files');
+
+      const count = data.tracks ? data.tracks.length : files.length;
+      notify(`Added ${count} sample${count > 1 ? 's' : ''}`);
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
 
   const handleSaveTitle = async () => {
     setIsEditingTitle(false);
@@ -308,11 +413,20 @@ export default function StudioManager() {
         <div className="studio-topbar-right">
           <button 
             className="studio-btn-import"
-            onClick={() => setIsAddModalOpen(true)}
-            title="Import folder with WAVs and cover"
+            onClick={handleCreateNewPack}
+            title="Create blank pack with default cover"
           >
             <Plus size={15} />
             <span>NEW PACK</span>
+          </button>
+
+          <button 
+            className="studio-btn-subtle"
+            onClick={() => setIsAddModalOpen(true)}
+            title="Import existing folder with WAVs and cover"
+          >
+            <FolderInput size={14} />
+            <span>IMPORT FOLDER</span>
           </button>
 
           <a 
@@ -333,6 +447,33 @@ export default function StudioManager() {
           <span>{notification.msg}</span>
         </div>
       )}
+
+      {/* hidden file inputs for click-to-upload fallback */}
+      <input
+        type="file"
+        ref={coverInputRef}
+        style={{ display: 'none' }}
+        accept="image/png,image/jpeg,image/webp"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            uploadCoverFile(e.target.files[0]);
+          }
+          e.target.value = '';
+        }}
+      />
+      <input
+        type="file"
+        ref={audioInputRef}
+        style={{ display: 'none' }}
+        multiple
+        accept="audio/*,.wav,.mp3,.flac,.aiff,.m4a"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            uploadAudioFiles(e.target.files);
+          }
+          e.target.value = '';
+        }}
+      />
 
       {/* 2-column workspace layout */}
       <div className="studio-layout">
@@ -380,7 +521,44 @@ export default function StudioManager() {
             <div className="studio-pack-view">
               {/* pack detail header banner */}
               <div className="studio-pack-hero">
-                <img src={currentPack.cover} alt={currentPack.name} className="studio-hero-art" />
+                {/* cover wrapper with drag and drop */}
+                <div 
+                  className={`studio-hero-art-wrap ${isCoverDragOver ? 'drag-over' : ''} ${isUploadingCover ? 'loading' : ''}`}
+                  onDragOver={(e) => {
+                    // check if dragging external files
+                    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                      setIsCoverDragOver(true);
+                    }
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsCoverDragOver(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsCoverDragOver(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      uploadCoverFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => coverInputRef.current?.click()}
+                  title="Click or drag & drop image here to change cover"
+                >
+                  <img src={currentPack.cover} alt={currentPack.name} className="studio-hero-art" />
+                  <div className="studio-cover-overlay">
+                    {isUploadingCover ? (
+                      <Loader2 size={18} className="spin-icon" />
+                    ) : (
+                      <>
+                        <Camera size={16} />
+                        <span>DRAG IMAGE</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 <div className="studio-hero-info">
                   <span className="studio-hero-id">{currentPack.id}</span>
                   {isEditingTitle ? (
@@ -437,6 +615,16 @@ export default function StudioManager() {
                   )}
                   
                   <div className="studio-hero-actions">
+                    <button
+                      className="studio-btn-subtle"
+                      onClick={() => audioInputRef.current?.click()}
+                      disabled={isUploadingAudio}
+                      title="Add audio samples via file picker"
+                    >
+                      {isUploadingAudio ? <Loader2 size={14} className="spin-icon" /> : <Plus size={14} />}
+                      <span>{isUploadingAudio ? 'PROCESSING AUDIO...' : 'ADD SAMPLES'}</span>
+                    </button>
+
                     {currentPack.downloadUrl && (
                       <a
                         href={currentPack.downloadUrl}
@@ -461,80 +649,123 @@ export default function StudioManager() {
                 </div>
               </div>
 
-              {/* samples table with reordering & drag handle */}
-              <div className="studio-table-section">
+              {/* samples table with reordering & external audio drag-and-drop zone */}
+              <div 
+                className={`studio-table-section ${isAudioZoneDragOver ? 'file-drop-active' : ''}`}
+                onDragOver={(e) => {
+                  if (draggedTrack) return; // ignore internal track reordering
+                  if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                    setIsAudioZoneDragOver(true);
+                  }
+                }}
+                onDragLeave={(e) => {
+                  if (draggedTrack) return;
+                  e.preventDefault();
+                  setIsAudioZoneDragOver(false);
+                }}
+                onDrop={(e) => {
+                  if (draggedTrack) return;
+                  e.preventDefault();
+                  setIsAudioZoneDragOver(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    uploadAudioFiles(e.dataTransfer.files);
+                  }
+                }}
+              >
                 <div className="studio-table-heading">
                   <span>SAMPLES ({(currentPack.tracks || []).length})</span>
-                  <span className="studio-drag-help">Drag handle to reorder rows or drag to a pack in the sidebar</span>
+                  <span className="studio-drag-help">
+                    {isUploadingAudio ? 'Converting previews with ffmpeg...' : 'Drag & drop WAV/MP3 files here to add audio • Drag rows to reorder'}
+                  </span>
                 </div>
 
-                <div className="studio-table">
-                  <div className="studio-table-row studio-table-head">
-                    <span className="st-col-play">#</span>
-                    <span className="st-col-title">SAMPLE NAME</span>
-                    <span className="st-col-meta">BPM</span>
-                    <span className="st-col-meta">KEY</span>
-                    <span className="st-col-dur">LENGTH</span>
-                    <span className="st-col-del">REMOVE</span>
+                {isAudioZoneDragOver && (
+                  <div className="studio-audio-drop-overlay">
+                    <UploadCloud size={28} />
+                    <span>Drop audio files to add to {currentPack.name}</span>
                   </div>
+                )}
 
-                  {(currentPack.tracks || []).map((track, idx) => {
-                    const isPlaying = playingTrackId === track.id;
-                    const isDragging = draggedTrack?.id === track.id;
-                    const isDragOver = dragOverTrackId === track.id;
+                {(currentPack.tracks || []).length === 0 ? (
+                  <div 
+                    className="studio-audio-empty-dropzone"
+                    onClick={() => audioInputRef.current?.click()}
+                  >
+                    <UploadCloud size={24} />
+                    <p className="dropzone-primary-text">Drag & drop audio files here</p>
+                    <p className="dropzone-sub-text">or click to browse (.wav, .mp3, .flac)</p>
+                  </div>
+                ) : (
+                  <div className="studio-table">
+                    <div className="studio-table-row studio-table-head">
+                      <span className="st-col-play">#</span>
+                      <span className="st-col-title">SAMPLE NAME</span>
+                      <span className="st-col-meta">BPM</span>
+                      <span className="st-col-meta">KEY</span>
+                      <span className="st-col-dur">LENGTH</span>
+                      <span className="st-col-del">REMOVE</span>
+                    </div>
 
-                    return (
-                      <div 
-                        key={track.id} 
-                        className={`studio-table-row ${isPlaying ? 'playing' : ''} ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, track)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleTrackDragOver(e, track.id)}
-                        onDragLeave={(e) => handleTrackDragLeave(e, track.id)}
-                        onDrop={(e) => handleTrackDrop(e, track)}
-                        title="Drag to reorder or drag onto a sidebar pack"
-                      >
-                        <div className="st-col-play">
-                          <button 
-                            className="st-btn-audition"
-                            onClick={() => handlePlayPreview(track)}
-                            title={isPlaying ? 'Pause' : 'Audition preview'}
-                          >
-                            {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-                          </button>
+                    {(currentPack.tracks || []).map((track, idx) => {
+                      const isPlaying = playingTrackId === track.id;
+                      const isDragging = draggedTrack?.id === track.id;
+                      const isDragOver = dragOverTrackId === track.id;
+
+                      return (
+                        <div 
+                          key={track.id} 
+                          className={`studio-table-row ${isPlaying ? 'playing' : ''} ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, track)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => handleTrackDragOver(e, track.id)}
+                          onDragLeave={(e) => handleTrackDragLeave(e, track.id)}
+                          onDrop={(e) => handleTrackDrop(e, track)}
+                          title="Drag to reorder or drag onto a sidebar pack"
+                        >
+                          <div className="st-col-play">
+                            <button 
+                              className="st-btn-audition"
+                              onClick={() => handlePlayPreview(track)}
+                              title={isPlaying ? 'Pause' : 'Audition preview'}
+                            >
+                              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                            </button>
+                          </div>
+
+                          <div className="st-col-title">
+                            <span className="st-track-title">{track.title}</span>
+                            <span className="st-track-id">{track.id}</span>
+                          </div>
+
+                          <div className="st-col-meta">
+                            <span className="st-badge">{track.bpm || '-'}</span>
+                          </div>
+
+                          <div className="st-col-meta">
+                            <span className="st-badge">{track.key || '-'}</span>
+                          </div>
+
+                          <div className="st-col-dur">
+                            <span>{track.duration ? `${Math.round(track.duration)}s` : '-'}</span>
+                          </div>
+
+                          <div className="st-col-del">
+                            <button
+                              className="st-btn-trash"
+                              onClick={() => handleDeleteTrack(track)}
+                              title="Delete sample"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </div>
-
-                        <div className="st-col-title">
-                          <span className="st-track-title">{track.title}</span>
-                          <span className="st-track-id">{track.id}</span>
-                        </div>
-
-                        <div className="st-col-meta">
-                          <span className="st-badge">{track.bpm || '-'}</span>
-                        </div>
-
-                        <div className="st-col-meta">
-                          <span className="st-badge">{track.key || '-'}</span>
-                        </div>
-
-                        <div className="st-col-dur">
-                          <span>{track.duration ? `${Math.round(track.duration)}s` : '-'}</span>
-                        </div>
-
-                        <div className="st-col-del">
-                          <button
-                            className="st-btn-trash"
-                            onClick={() => handleDeleteTrack(track)}
-                            title="Delete sample"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           ) : (

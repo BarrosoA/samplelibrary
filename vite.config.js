@@ -6,6 +6,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const manager = require('./scripts/lib/catalogue-manager.cjs');
 
+const formidable = require('formidable');
+
 function catalogueDevPlugin() {
   return {
     name: 'catalogue-dev-middleware',
@@ -14,6 +16,48 @@ function catalogueDevPlugin() {
       server.middlewares.use('/api/manage', (req, res, next) => {
         if (req.method !== 'POST') return next();
 
+        const url = req.url;
+
+        // multipart file uploads
+        if (url === '/upload-cover' || url === '/upload-tracks') {
+          const form = formidable({ multiples: true });
+          form.parse(req, (err, fields, files) => {
+            if (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({ error: err.message }));
+            }
+
+            try {
+              const packId = Array.isArray(fields.packId) ? fields.packId[0] : fields.packId;
+              if (!packId) throw new Error('packId is required');
+
+              if (url === '/upload-cover') {
+                const coverFile = Array.isArray(files.cover) ? files.cover[0] : files.cover;
+                if (!coverFile) throw new Error('No cover file uploaded');
+                const result = manager.updatePackCover(packId, coverFile.filepath, coverFile.originalFilename);
+                res.setHeader('Content-Type', 'application/json');
+                return res.end(JSON.stringify(result));
+              }
+
+              if (url === '/upload-tracks') {
+                let trackFiles = files.tracks || files.file || [];
+                if (!Array.isArray(trackFiles)) trackFiles = [trackFiles];
+                if (trackFiles.length === 0) throw new Error('No audio files uploaded');
+                const result = manager.addTracksToPack(packId, trackFiles);
+                res.setHeader('Content-Type', 'application/json');
+                return res.end(JSON.stringify(result));
+              }
+            } catch (handleErr) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({ error: handleErr.message }));
+            }
+          });
+          return;
+        }
+
+        // json payloads
         let body = '';
         req.on('data', (chunk) => {
           body += chunk;
@@ -21,9 +65,12 @@ function catalogueDevPlugin() {
         req.on('end', () => {
           try {
             const payload = JSON.parse(body || '{}');
-            const url = req.url;
 
-            if (url === '/delete-track') {
+            if (url === '/create-pack') {
+              const result = manager.createBlankPack(payload);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+            } else if (url === '/delete-track') {
               const result = manager.deleteTrack(payload.packId, payload.trackId);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
