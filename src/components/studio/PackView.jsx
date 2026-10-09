@@ -11,6 +11,7 @@ export default function PackView({
   pack,
   autoEditTitle,
   player,
+  downloads,
   draggedTrack,
   onDragTrack,
   onReorderTracks,
@@ -148,6 +149,7 @@ export default function PackView({
             pack={pack}
             tracks={tracks}
             player={player}
+            downloads={downloads}
             draggedTrack={draggedTrack}
             onDragTrack={onDragTrack}
             onReorder={onReorderTracks}

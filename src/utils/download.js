@@ -51,8 +51,24 @@ async function fetchMaster(track) {
   return new Blob(parts, { type: 'audio/wav' });
 }
 
+const isLocalhost = () => ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+
+// best-effort ping to the download counter that lives next to the media; never holds up the download
+function countDownload(tracks, packId) {
+  const withMaster = tracks.filter(hasMaster);
+  if (withMaster.length === 0 || isLocalhost() || !navigator.sendBeacon) return;
+  try {
+    const origin = new URL(withMaster[0].master.parts[0]).origin;
+    const ids = withMaster.map((t) => t.id);
+    navigator.sendBeacon(`${origin}/api/hit`, JSON.stringify(packId ? { pack: packId, tracks: ids } : { tracks: ids }));
+  } catch {
+    // counting is optional
+  }
+}
+
 // resolves once the browser has the download (worker path) or the file is saved (fallback path)
 export async function downloadTrack(pack, track) {
+  countDownload([track]);
   if (!hasMaster(track)) {
     triggerDirectDownload(track?.downloadUrl);
     return;
@@ -66,6 +82,7 @@ export async function downloadTrack(pack, track) {
 
 export async function downloadPack(pack) {
   const tracks = (pack.tracks || []).filter(hasMaster);
+  countDownload(tracks, pack.id);
   if (tracks.length === 0) {
     (pack.tracks || []).forEach((t, i) => setTimeout(() => triggerDirectDownload(t.downloadUrl), i * 600));
     return;

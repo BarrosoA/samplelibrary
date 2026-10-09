@@ -22,12 +22,31 @@ function Stat({ label, value, sub, title, children }) {
 }
 
 // cloudflare doesn't report usage, so these are worked out from what Studio Manager uploaded
-export default function StorageStrip({ storage }) {
+function DownloadsStat({ downloads }) {
+  if (!downloads) return <Stat label="DOWNLOADS" value="..." sub="checking cloudflare" />;
+  if (downloads.error) return <Stat label="DOWNLOADS" value="-" sub="couldn't load" title={downloads.error} />;
+  if (!downloads.live) return <Stat label="DOWNLOADS" value="-" sub="starts after next publish" />;
+
+  const samples = Object.values(downloads.tracks).reduce((sum, t) => sum + t.single + t.inPack, 0);
+  const zips = Object.values(downloads.packs).reduce((sum, n) => sum + n, 0);
+  return (
+    <Stat
+      label="DOWNLOADS"
+      value={samples.toLocaleString()}
+      sub={`samples · ${zips.toLocaleString()} pack zip${zips === 1 ? '' : 's'}`}
+      title="Counted by the site since the counter went live. Ad blockers can hide some downloads, and repeat downloads count again."
+    />
+  );
+}
+
+export default function StorageStrip({ storage, downloads }) {
   const shown = storage.live || storage.afterPublish;
   const filePct = Math.min(100, (shown.files / storage.fileLimit) * 100);
 
   return (
     <div className="studio-usage-strip">
+      <DownloadsStat downloads={downloads} />
+
       <Stat label="CLOUD STORAGE" value={formatBytes(shown.bytes)} sub="no size cap" title="Total size of the live media on Cloudflare Pages. The free plan has no total size limit." />
 
       <Stat

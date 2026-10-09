@@ -19,6 +19,7 @@ const ROUTES = {
   '/import-staging': (p) => manager.importPackFromStaging(p),
   '/publish': () => manager.publishToGit(),
   '/storage-stats': () => media.cloudUsage(manager.loadCatalogue()),
+  '/download-stats': () => media.downloadCounts(),
   '/inbox': () => manager.listInbox(),
   '/inbox-add': (p) => manager.addTrackFromFile(p.packId, p.path),
   '/inbox-update': (p) => manager.updateTrackFromFile(p.path),

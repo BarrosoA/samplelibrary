@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const ENV_LOCAL_PATH = path.join(PROJECT_ROOT, '.env.local');
@@ -9,6 +9,7 @@ const ENV_LOCAL_PATH = path.join(PROJECT_ROOT, '.env.local');
 // cloudflare pages rejects files over 25 MiB
 const PART_SIZE = 24 * 1024 * 1024;
 const LOOP_EXTENSIONS = ['.wav', '.aif', '.aiff', '.flac'];
+const COUNTER_SOURCE = path.join(__dirname, '../cloudflare/download-counter.js');
 
 function loadEnvConfig() {
   const env = {};
@@ -326,6 +327,8 @@ function buildStaging(catalogue) {
   };
   mirror(d.deploy, d.staging);
   for (const m of resolved) writeParts(m.path, m.key, m.size, path.join(d.staging, 'm'));
+  fs.copyFileSync(COUNTER_SOURCE, path.join(d.staging, '_worker.js'));
+  writeJson(path.join(d.staging, '_routes.json'), { version: 1, include: ['/api/*'], exclude: [] });
   return d.staging;
 }
 
@@ -339,18 +342,29 @@ function listDeployFiles(dir, base = dir) {
   });
 }
 
-function wrangler(args, extraEnv) {
+// called by path so it also runs from the media folder, where npx can't see this project's wrangler
+const WRANGLER_BIN = path.join(PROJECT_ROOT, 'node_modules/wrangler/bin/wrangler.js');
+
+function wranglerOptions(cwd) {
   const { env } = loadEnvConfig();
   const childEnv = { ...process.env };
   for (const k of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID']) {
     if (env[k]) childEnv[k] = env[k];
   }
-  return execSync(`npx wrangler ${args}`, {
-    cwd: PROJECT_ROOT,
-    env: { ...childEnv, ...extraEnv },
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    maxBuffer: 64 * 1024 * 1024,
+  return { cwd, env: childEnv, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 };
+}
+
+function wrangler(args, cwd = PROJECT_ROOT) {
+  return execSync(`node "${WRANGLER_BIN}" ${args}`, { ...wranglerOptions(cwd), stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+// for reads from the dev server, which would otherwise freeze while wrangler talks to cloudflare
+function wranglerAsync(args) {
+  return new Promise((resolve, reject) => {
+    exec(`node "${WRANGLER_BIN}" ${args}`, wranglerOptions(PROJECT_ROOT), (err, stdout, stderr) => {
+      if (err) reject(Object.assign(err, { stderr }));
+      else resolve(stdout);
+    });
   });
 }
 
@@ -418,9 +432,14 @@ function pruneDeployments() {
   return { removed, kept: deployments.length - removed, keepCount, keepDays };
 }
 
+// a changed counter has to be uploaded even when no media changed
 function deploySnapshot(catalogue) {
   const d = dirs();
-  return [...listDeployFiles(d.deploy), ...catalogueMasters(catalogue).map((m) => `master:${m.key}:${m.size}`)].sort();
+  return [
+    ...listDeployFiles(d.deploy),
+    ...catalogueMasters(catalogue).map((m) => `master:${m.key}:${m.size}`),
+    `counter:${hashFile(COUNTER_SOURCE)}`,
+  ].sort();
 }
 
 // free plan allows 20,000 files per deployment and has no total size cap
@@ -430,7 +449,7 @@ function measureSnapshot(snapshot, sizeByKey) {
   const stored = new Set();
   let files = 0;
   let bytes = 0;
-  for (const entry of snapshot.filter((e) => !e.startsWith('master:'))) {
+  for (const entry of snapshot.filter((e) => !e.startsWith('master:') && !e.startsWith('counter:'))) {
     const idx = entry.lastIndexOf(':');
     stored.add(entry.slice(0, idx));
     files += 1;
@@ -489,7 +508,8 @@ function deploy({ catalogue, force = false }) {
     const staging = buildStaging(catalogue);
     try {
       ensureProject();
-      wrangler(`pages deploy "${staging}" --project-name=${projectName} --branch=main --commit-dirty=true`);
+      writePagesConfig(ensureCounterDb());
+      wrangler(`pages deploy staging --project-name=${projectName} --branch=main --commit-dirty=true`, d.root);
     } finally {
       fs.rmSync(staging, { recursive: true, force: true });
     }
@@ -505,6 +525,61 @@ function deploy({ catalogue, force = false }) {
     console.warn(`[media] snapshot cleanup skipped: ${err.message.split('\n')[0]}`);
   }
   return { deployed, message };
+}
+
+const counterDbName = () => `${loadEnvConfig().projectName}-downloads`;
+
+// the D1 database the download counter writes to, created on first publish
+function ensureCounterDb() {
+  const name = counterDbName();
+  const find = () => JSON.parse(wrangler('d1 list --json')).find((db) => db.name === name);
+  let db = find();
+  if (!db) {
+    wrangler(`d1 create ${name}`);
+    db = find();
+    if (!db) throw new Error(`Created the "${name}" database on Cloudflare but could not find it afterwards.`);
+  }
+  wrangler(`d1 execute ${name} --remote --command "CREATE TABLE IF NOT EXISTS counts (key TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)"`);
+  return { name, id: db.uuid };
+}
+
+// pages only reads its config from the folder wrangler runs in, so it lives next to the staging folder
+function writePagesConfig(db) {
+  const { projectName } = loadEnvConfig();
+  const toml = [
+    `name = "${projectName}"`,
+    'pages_build_output_dir = "staging"',
+    'compatibility_date = "2025-09-01"',
+    '',
+    '[[d1_databases]]',
+    'binding = "DB"',
+    `database_name = "${db.name}"`,
+    `database_id = "${db.id}"`,
+    '',
+  ].join('\n');
+  fs.writeFileSync(path.join(dirs().root, 'wrangler.toml'), toml);
+}
+
+// counts stay off until a publish has uploaded the counter
+async function downloadCounts() {
+  const live = readJson(dirs().state, []);
+  if (!live.some((e) => e.startsWith('counter:'))) return { live: false };
+
+  const out = await wranglerAsync(`d1 execute ${counterDbName()} --remote --json --command "SELECT key, n FROM counts"`);
+  const tracks = {};
+  const packs = {};
+  for (const { key, n } of JSON.parse(out)[0]?.results || []) {
+    const split = key.indexOf(':');
+    const kind = key.slice(0, split);
+    const id = key.slice(split + 1);
+    if (kind === 'p') {
+      packs[id] = n;
+      continue;
+    }
+    tracks[id] = tracks[id] || { single: 0, inPack: 0 };
+    tracks[id][kind === 't' ? 'single' : 'inPack'] = n;
+  }
+  return { live: true, tracks, packs };
 }
 
 // drops stored parts for masters whose original is found in the compositions folder
@@ -584,5 +659,6 @@ module.exports = {
   parseAgeDays,
   pruneDeployments,
   cloudUsage,
+  downloadCounts,
   deploy,
 };

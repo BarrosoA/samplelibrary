@@ -3,7 +3,7 @@ import { Trash2, Play, Pause, Loader2 } from 'lucide-react';
 import { setDragPill } from './studioUtils';
 
 // samples in a pack: drag rows to reorder, or onto a sidebar pack to move them
-export default function TrackTable({ pack, tracks, player, draggedTrack, onDragTrack, onReorder, onDelete }) {
+export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete }) {
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
 
   const handleDragStart = (e, track) => {
@@ -49,6 +49,7 @@ export default function TrackTable({ pack, tracks, player, draggedTrack, onDragT
         <span className="st-col-meta">BPM</span>
         <span className="st-col-meta">KEY</span>
         <span className="st-col-dur">LENGTH</span>
+        <span className="st-col-dur">DOWNLOADS</span>
         <span className="st-col-del">REMOVE</span>
       </div>
 
@@ -57,6 +58,7 @@ export default function TrackTable({ pack, tracks, player, draggedTrack, onDragT
         const isPlaying = !isPending && player.playingId === track.id;
         const isDragging = !isPending && draggedTrack?.id === track.id;
         const isDragOver = !isPending && dragOverTrackId === track.id;
+        const dl = downloads && (downloads.tracks[track.id] || { single: 0, inPack: 0 });
 
         return (
           <div
@@ -99,6 +101,13 @@ export default function TrackTable({ pack, tracks, player, draggedTrack, onDragT
 
             <div className="st-col-dur">
               <span>{isPending ? '...' : track.duration ? `${Math.round(track.duration)}s` : '-'}</span>
+            </div>
+
+            <div
+              className="st-col-dur"
+              title={dl ? `${dl.single} on its own, ${dl.inPack} in pack downloads` : 'Counts appear after the next publish'}
+            >
+              <span>{dl && !isPending ? (dl.single + dl.inPack).toLocaleString() : '-'}</span>
             </div>
 
             <div className="st-col-del">

@@ -58,6 +58,23 @@ export default function StudioManager() {
     fetchStorage();
   }, [catalogue, fetchStorage]);
 
+  // asks cloudflare, so only on open and after publishing rather than on every edit
+  const [downloads, setDownloads] = useState(null);
+  const fetchDownloads = useCallback(() => {
+    postJson('download-stats', {}, 'Could not load download counts')
+      .then(setDownloads)
+      .catch((err) => setDownloads({ error: err.message }));
+  }, []);
+
+  useEffect(() => {
+    fetchDownloads();
+  }, [fetchDownloads]);
+
+  const handlePublished = () => {
+    fetchStorage();
+    fetchDownloads();
+  };
+
   const inbox = useInbox({ notify, onLibraryChanged: fetchCatalogue });
 
   const selectPack = (id) => {
@@ -145,6 +162,7 @@ export default function StudioManager() {
         pack={currentPack}
         autoEditTitle={titleEditPackId === currentPack.id}
         player={player}
+        downloads={downloads?.live ? downloads : null}
         draggedTrack={draggedTrack}
         onDragTrack={setDraggedTrack}
         onReorderTracks={handleReorderTracks}
@@ -171,10 +189,10 @@ export default function StudioManager() {
         notify={notify}
         onNewPack={handleCreateNewPack}
         onImportFolder={() => setIsAddModalOpen(true)}
-        onPublished={fetchStorage}
+        onPublished={handlePublished}
       />
 
-      {storage && <StorageStrip storage={storage} />}
+      {storage && <StorageStrip storage={storage} downloads={downloads} />}
 
       {notification && (
         <div className={`studio-toast ${notification.type}`}>
