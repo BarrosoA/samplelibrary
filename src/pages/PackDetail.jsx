@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Play, Pause, Download, FolderArchive } from 'lucide-react';
+import { triggerDirectDownload } from '../utils/download';
 
 export default function PackDetail({
   pack,
@@ -142,16 +143,15 @@ export default function PackDetail({
                 </div>
 
                 <div className="col-download" onClick={(e) => e.stopPropagation()}>
-                  <a
-                    href={track.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     className="row-download-btn"
+                    onClick={() => triggerDirectDownload(track.downloadUrl)}
                     title={`Download lossless ${track.format || 'WAV'} from Google Drive`}
                   >
                     <Download size={13} />
                     <span>{track.format || 'WAV'}</span>
-                  </a>
+                  </button>
                 </div>
               </div>
             );

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward } from 'lucide-react';
+import { triggerDirectDownload } from '../utils/download';
 
 export default function AudioPlayer({
   currentTrack,
@@ -181,15 +182,14 @@ export default function AudioPlayer({
             />
           </div>
 
-          <a
-            href={currentTrack.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => triggerDirectDownload(currentTrack.downloadUrl)}
             className="player-download-btn"
             title={`Download lossless ${currentTrack.format || 'file'} from Google Drive`}
           >
             <Download size={15} />
-          </a>
+          </button>
         </div>
       </div>
     </footer>
