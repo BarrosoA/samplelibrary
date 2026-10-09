@@ -50,6 +50,72 @@ export default function StudioManager() {
 
   const currentPack = (catalogue.packs || []).find((p) => p.id === selectedPackId) || null;
 
+  // inline editing state for title and description
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState('');
+
+  useEffect(() => {
+    if (currentPack) {
+      setTitleValue(currentPack.name || '');
+      setDescValue(currentPack.description || '');
+      setIsEditingTitle(false);
+      setIsEditingDesc(false);
+    }
+  }, [currentPack?.id, currentPack?.name, currentPack?.description]);
+
+  const handleSaveTitle = async () => {
+    setIsEditingTitle(false);
+    const trimmed = titleValue.trim();
+    if (!trimmed || trimmed === currentPack?.name) {
+      setTitleValue(currentPack?.name || '');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/manage/update-pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packId: currentPack.id,
+          updates: { name: trimmed },
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update title');
+      notify(`Updated title to "${trimmed}"`);
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+      setTitleValue(currentPack?.name || '');
+    }
+  };
+
+  const handleSaveDesc = async () => {
+    setIsEditingDesc(false);
+    const trimmed = descValue.trim();
+    if (trimmed === (currentPack?.description || '')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/manage/update-pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packId: currentPack.id,
+          updates: { description: trimmed },
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update description');
+      notify('Updated description');
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+      setDescValue(currentPack?.description || '');
+    }
+  };
+
   const handlePlayPreview = (track) => {
     if (playingTrackId === track.id) {
       if (audioObj) {
@@ -317,8 +383,58 @@ export default function StudioManager() {
                 <img src={currentPack.cover} alt={currentPack.name} className="studio-hero-art" />
                 <div className="studio-hero-info">
                   <span className="studio-hero-id">{currentPack.id}</span>
-                  <h1 className="studio-hero-title">{currentPack.name}</h1>
-                  <p className="studio-hero-desc">{currentPack.description || 'No description set.'}</p>
+                  {isEditingTitle ? (
+                    <input
+                      type="text"
+                      className="studio-hero-title-input"
+                      value={titleValue}
+                      onChange={(e) => setTitleValue(e.target.value)}
+                      onBlur={handleSaveTitle}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveTitle();
+                        if (e.key === 'Escape') {
+                          setIsEditingTitle(false);
+                          setTitleValue(currentPack.name || '');
+                        }
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <h1
+                      className="studio-hero-title"
+                      onClick={() => setIsEditingTitle(true)}
+                      title="Click to edit album title"
+                    >
+                      {currentPack.name}
+                    </h1>
+                  )}
+
+                  {isEditingDesc ? (
+                    <textarea
+                      className="studio-hero-desc-input"
+                      value={descValue}
+                      onChange={(e) => setDescValue(e.target.value)}
+                      onBlur={handleSaveDesc}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSaveDesc();
+                        if (e.key === 'Escape') {
+                          setIsEditingDesc(false);
+                          setDescValue(currentPack.description || '');
+                        }
+                      }}
+                      placeholder="Write album description..."
+                      rows={2}
+                      autoFocus
+                    />
+                  ) : (
+                    <p
+                      className={`studio-hero-desc ${!currentPack.description ? 'is-empty' : ''}`}
+                      onClick={() => setIsEditingDesc(true)}
+                      title="Click to edit description"
+                    >
+                      {currentPack.description || 'Click to add album description...'}
+                    </p>
+                  )}
                   
                   <div className="studio-hero-actions">
                     {currentPack.downloadUrl && (

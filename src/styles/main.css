@@ -1219,6 +1219,34 @@ a {
   font-weight: 800;
   color: #ffffff;
   line-height: 1.1;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin-left: -6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+
+.studio-hero-title:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.studio-hero-title-input {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  background: #141414;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: -6px;
+  width: 100%;
+  max-width: 520px;
+  outline: none;
+  font-family: inherit;
 }
 
 .studio-hero-desc {
@@ -1226,6 +1254,40 @@ a {
   color: #888888;
   line-height: 1.4;
   max-width: 600px;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-left: -6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+
+.studio-hero-desc:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.studio-hero-desc.is-empty {
+  color: #555555;
+  font-style: italic;
+}
+
+.studio-hero-desc-input {
+  font-size: 0.8rem;
+  color: #ededed;
+  line-height: 1.4;
+  background: #141414;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-left: -6px;
+  width: 100%;
+  max-width: 600px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 48px;
 }
 
 .studio-hero-actions {

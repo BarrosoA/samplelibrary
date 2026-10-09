@@ -39,6 +39,10 @@ function catalogueDevPlugin() {
               const result = manager.deletePack(payload.packId);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
+            } else if (url === '/update-pack') {
+              const result = manager.updatePack(payload.packId, payload.updates);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
             } else if (url === '/import-staging') {
               const result = manager.importPackFromStaging(payload);
               res.setHeader('Content-Type', 'application/json');

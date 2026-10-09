@@ -259,7 +259,7 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
     name: packName.toUpperCase(),
     cover: coverPath,
     trackCount: tracks.length,
-    description: description || 'Original master sample collection.',
+    description: description ? description.trim() : '',
     downloadUrl: downloadUrl || '',
     format: 'WAV',
     license: 'Royalty-Free',
@@ -274,6 +274,23 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
   return { success: true, pack: newPack };
 }
 
+function updatePack(packId, updates = {}) {
+  const data = loadCatalogue();
+  const pack = (data.packs || []).find((p) => p.id === packId);
+  if (!pack) throw new Error(`pack ${packId} not found`);
+
+  if (typeof updates.name === 'string') {
+    const trimmed = updates.name.trim();
+    if (trimmed) pack.name = trimmed;
+  }
+  if (typeof updates.description === 'string') {
+    pack.description = updates.description.trim();
+  }
+
+  saveCatalogue(data);
+  return { success: true, pack };
+}
+
 module.exports = {
   loadCatalogue,
   saveCatalogue,
@@ -281,6 +298,7 @@ module.exports = {
   moveTrack,
   reorderTracks,
   deletePack,
+  updatePack,
   importPackFromStaging,
   parseAudioMetadataFromFilename,
   probeDuration,
