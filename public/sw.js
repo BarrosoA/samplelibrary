@@ -6,8 +6,18 @@ const DL_PREFIX = '/_dl/';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
+// cloudflare pages ignores Range headers, which breaks seeking (and Safari playback) for previews
+const PREVIEW_PATH = /^\/p\/[0-9a-f]{24}\.opus$/;
+const PREVIEW_CACHE = 'previews-v1';
+const PREVIEW_CACHE_LIMIT = 40;
+const previewFetches = new Map();
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  if (event.request.method === 'GET' && PREVIEW_PATH.test(url.pathname)) {
+    event.respondWith(servePreview(event.request).catch(() => fetch(event.request)));
+    return;
+  }
   if (url.origin !== self.location.origin || !url.pathname.startsWith(DL_PREFIX)) return;
 
   let finish;
@@ -21,6 +31,57 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+async function loadPreview(url) {
+  const cache = await caches.open(PREVIEW_CACHE);
+  const cached = await cache.match(url);
+  if (cached) return cached.blob();
+
+  if (!previewFetches.has(url)) {
+    const pending = (async () => {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await cache.put(url, res.clone());
+      const keys = await cache.keys();
+      await Promise.all(keys.slice(0, Math.max(0, keys.length - PREVIEW_CACHE_LIMIT)).map((k) => cache.delete(k)));
+      return res.blob();
+    })().finally(() => previewFetches.delete(url));
+    previewFetches.set(url, pending);
+  }
+  return previewFetches.get(url);
+}
+
+async function servePreview(request) {
+  const blob = await loadPreview(request.url);
+  const size = blob.size;
+  const headers = { 'Content-Type': blob.type || 'audio/ogg', 'Accept-Ranges': 'bytes' };
+  const match = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') || '');
+
+  if (!match || (!match[1] && !match[2])) {
+    return new Response(blob, { status: 200, headers: { ...headers, 'Content-Length': String(size) } });
+  }
+
+  let start;
+  let end;
+  if (match[1]) {
+    start = Number(match[1]);
+    end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+  } else {
+    start = Math.max(0, size - Number(match[2]));
+    end = size - 1;
+  }
+  if (start >= size || start > end) {
+    return new Response(null, { status: 416, headers: { ...headers, 'Content-Range': `bytes */${size}` } });
+  }
+  return new Response(blob.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      ...headers,
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+    },
+  });
+}
 
 function safeName(name) {
   return String(name).replace(/[\\/:*?"<>|\x00-\x1f]+/g, '_').trim() || 'download';
