@@ -1476,6 +1476,26 @@ a {
   background: #161616;
 }
 
+.studio-table-row.is-pending {
+  opacity: 0.42;
+  cursor: wait;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.studio-table-row.is-pending .st-track-title {
+  color: #888888;
+}
+
+.studio-table-row.is-pending .st-track-id {
+  color: #666666;
+  font-style: italic;
+}
+
+.pending-spinner {
+  color: #666666;
+}
+
 .studio-table-row.is-dragging {
   opacity: 0.35;
   background: #1a1a1a;

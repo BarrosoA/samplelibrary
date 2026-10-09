@@ -26,6 +26,7 @@ export default function StudioManager() {
   const [notification, setNotification] = useState(null);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [pendingTracks, setPendingTracks] = useState([]);
 
   // drag state
   const [draggedTrack, setDraggedTrack] = useState(null);
@@ -59,6 +60,11 @@ export default function StudioManager() {
   };
 
   const currentPack = (catalogue.packs || []).find((p) => p.id === selectedPackId) || null;
+
+  // clear pending tracks when switching packs
+  useEffect(() => {
+    setPendingTracks([]);
+  }, [selectedPackId]);
 
   // inline editing state for title and description
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -147,7 +153,22 @@ export default function StudioManager() {
       return;
     }
 
+    // create optimistic pending rows immediately
+    const tempPending = files.map((file, idx) => {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+      return {
+        id: `pending-${Date.now()}-${idx}`,
+        title: cleanName,
+        bpm: '...',
+        key: '...',
+        duration: null,
+        isPending: true,
+      };
+    });
+
+    setPendingTracks((prev) => [...prev, ...tempPending]);
     setIsUploadingAudio(true);
+
     try {
       const formData = new FormData();
       formData.append('packId', currentPack.id);
@@ -162,10 +183,11 @@ export default function StudioManager() {
 
       const count = data.tracks ? data.tracks.length : files.length;
       notify(`Added ${count} sample${count > 1 ? 's' : ''}`);
-      fetchCatalogue();
+      await fetchCatalogue();
     } catch (err) {
       notify(err.message, 'error');
     } finally {
+      setPendingTracks((prev) => prev.filter((p) => !tempPending.some((t) => t.id === p.id)));
       setIsUploadingAudio(false);
     }
   };
@@ -682,7 +704,7 @@ export default function StudioManager() {
                   </div>
                 )}
 
-                {(currentPack.tracks || []).length === 0 ? (
+                {(currentPack.tracks || []).length === 0 && pendingTracks.length === 0 ? (
                   <div 
                     className="studio-audio-empty-dropzone"
                     onClick={() => audioInputRef.current?.click()}
@@ -702,36 +724,43 @@ export default function StudioManager() {
                       <span className="st-col-del">REMOVE</span>
                     </div>
 
-                    {(currentPack.tracks || []).map((track, idx) => {
-                      const isPlaying = playingTrackId === track.id;
-                      const isDragging = draggedTrack?.id === track.id;
-                      const isDragOver = dragOverTrackId === track.id;
+                    {[...(currentPack.tracks || []), ...pendingTracks].map((track, idx) => {
+                      const isPending = track.isPending;
+                      const isPlaying = !isPending && playingTrackId === track.id;
+                      const isDragging = !isPending && draggedTrack?.id === track.id;
+                      const isDragOver = !isPending && dragOverTrackId === track.id;
 
                       return (
                         <div 
                           key={track.id} 
-                          className={`studio-table-row ${isPlaying ? 'playing' : ''} ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, track)}
+                          className={`studio-table-row ${isPending ? 'is-pending' : ''} ${isPlaying ? 'playing' : ''} ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                          draggable={!isPending}
+                          onDragStart={(e) => !isPending && handleDragStart(e, track)}
                           onDragEnd={handleDragEnd}
-                          onDragOver={(e) => handleTrackDragOver(e, track.id)}
-                          onDragLeave={(e) => handleTrackDragLeave(e, track.id)}
-                          onDrop={(e) => handleTrackDrop(e, track)}
-                          title="Drag to reorder or drag onto a sidebar pack"
+                          onDragOver={(e) => !isPending && handleTrackDragOver(e, track.id)}
+                          onDragLeave={(e) => !isPending && handleTrackDragLeave(e, track.id)}
+                          onDrop={(e) => !isPending && handleTrackDrop(e, track)}
+                          title={isPending ? 'Processing audio and uploading to Google Drive...' : 'Drag to reorder or drag onto a sidebar pack'}
                         >
                           <div className="st-col-play">
-                            <button 
-                              className="st-btn-audition"
-                              onClick={() => handlePlayPreview(track)}
-                              title={isPlaying ? 'Pause' : 'Audition preview'}
-                            >
-                              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-                            </button>
+                            {isPending ? (
+                              <Loader2 size={13} className="spin-icon pending-spinner" />
+                            ) : (
+                              <button 
+                                className="st-btn-audition"
+                                onClick={() => handlePlayPreview(track)}
+                                title={isPlaying ? 'Pause' : 'Audition preview'}
+                              >
+                                {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                              </button>
+                            )}
                           </div>
 
                           <div className="st-col-title">
                             <span className="st-track-title">{track.title}</span>
-                            <span className="st-track-id">{track.id}</span>
+                            <span className="st-track-id">
+                              {isPending ? 'processing & uploading...' : track.id}
+                            </span>
                           </div>
 
                           <div className="st-col-meta">
@@ -743,17 +772,25 @@ export default function StudioManager() {
                           </div>
 
                           <div className="st-col-dur">
-                            <span>{track.duration ? `${Math.round(track.duration)}s` : '-'}</span>
+                            <span>
+                              {isPending
+                                ? '...'
+                                : track.duration
+                                ? `${Math.round(track.duration)}s`
+                                : '-'}
+                            </span>
                           </div>
 
                           <div className="st-col-del">
-                            <button
-                              className="st-btn-trash"
-                              onClick={() => handleDeleteTrack(track)}
-                              title="Delete sample"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            {!isPending && (
+                              <button
+                                className="st-btn-trash"
+                                onClick={() => handleDeleteTrack(track)}
+                                title="Delete sample"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
