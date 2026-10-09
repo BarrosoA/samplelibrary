@@ -1701,28 +1701,186 @@ a {
   }
 }
 
+.row-track-meta-mobile {
+  display: none;
+}
+
+/* touch screens have no hover, so the row play button would never appear */
+@media (hover: none) {
+  .row-number-text {
+    display: none;
+  }
+  .row-play-btn {
+    display: flex;
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .track-table-row.is-active .row-play-btn {
+    background: #ffffff;
+    color: #0a0a0a;
+    border-color: #ffffff;
+  }
+}
+
 @media (max-width: 640px) {
   .app-wrapper {
-    padding: 16px 14px 130px 14px;
+    /* leave room for the fixed player so the last rows can scroll above it */
+    padding: 16px 16px calc(140px + env(safe-area-inset-bottom, 0px)) 16px;
   }
+
+  /* library header: title on its own line, search full width below */
+  .top-nav {
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .search-mini {
+    width: 100%;
+  }
+  .search-mini-input {
+    font-size: 16px; /* below 16px iOS zooms the page when the field is focused */
+    padding: 10px 12px 10px 36px;
+  }
+
   .packs-grid {
-    grid-template-columns: repeat(2, minmax(0, 160px));
-    gap: 14px 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 12px;
   }
-  .audio-player-bar {
-    height: auto;
-    padding: 10px 14px;
+
+  /* pack page: cover beside the title instead of a big empty column */
+  .pack-detail-page {
+    gap: 18px;
   }
-  .player-inner {
-    grid-template-columns: 1fr;
+  .album-hero {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 0;
+  }
+  .album-hero-cover-wrap {
+    width: 96px;
+    height: 96px;
+  }
+  .album-hero-content {
+    display: contents;
+  }
+  .album-hero-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.45rem;
+    overflow-wrap: anywhere;
+  }
+  .album-hero-desc,
+  .album-actions-group {
+    flex-basis: 100%;
+  }
+  .album-actions-group {
+    margin-top: 0;
     gap: 10px;
   }
-  .player-left, .player-center, .player-right {
-    width: 100%;
-    min-width: auto;
+  .action-play-album-btn,
+  .action-download-zip-btn {
+    flex: 1;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 10px;
+    white-space: nowrap;
   }
+
+  /* tracklist: play, title with BPM/key/length underneath, download */
+  .tracklist-header-row {
+    display: none;
+  }
+  .track-table-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 12px 4px;
+  }
+  .track-table-row .col-bpm,
+  .track-table-row .col-key,
+  .track-table-row .col-duration {
+    display: none;
+  }
+  .col-idx {
+    width: 32px;
+    height: 32px;
+  }
+  .row-play-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .row-track-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+  .row-track-instrument {
+    display: none;
+  }
+  .row-track-meta-mobile {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .row-download-btn {
+    padding: 8px 4px 8px 8px;
+  }
+
+  /* player: two compact rows instead of three stacked blocks */
+  .audio-player-bar {
+    height: auto;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .player-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'info controls'
+      'time download';
+    gap: 8px 12px;
+  }
+  .player-center,
   .player-right {
-    justify-content: space-between;
+    display: contents;
+  }
+  .player-left {
+    grid-area: info;
+  }
+  .player-controls-row {
+    grid-area: controls;
+    gap: 10px;
+  }
+  .timeline-container {
+    grid-area: time;
+  }
+  .player-download-btn {
+    grid-area: download;
+  }
+  .volume-container {
+    display: none; /* phones use their volume buttons; iOS ignores the slider */
+  }
+  .player-cover-thumb {
+    width: 38px;
+    height: 38px;
+  }
+  .ctrl-btn-play {
+    width: 36px;
+    height: 36px;
+  }
+  .progress-bar-wrap::after {
+    /* a 3px bar is too thin to hit with a finger */
+    content: '';
+    position: absolute;
+    inset: -12px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .player-controls-row .ctrl-btn:not(.ctrl-btn-play):last-child {
+    display: none; /* loop toggle; it stays on by default */
   }
 }
 

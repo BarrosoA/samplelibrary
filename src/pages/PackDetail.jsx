@@ -180,6 +180,15 @@ export default function PackDetail({
                   {track.instrument && (
                     <span className="row-track-instrument">{track.instrument}</span>
                   )}
+                  <span className="row-track-meta-mobile">
+                    {[
+                      track.bpm ? `${track.bpm} BPM` : null,
+                      track.key && track.key !== '-' ? track.key : null,
+                      formatSeconds(track.duration),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
                 </div>
 
                 <div className="col-bpm">
