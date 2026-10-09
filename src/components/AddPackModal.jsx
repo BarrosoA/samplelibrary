@@ -5,7 +5,6 @@ export default function AddPackModal({ isOpen, onClose, onSuccess }) {
   const [folderPath, setFolderPath] = useState('');
   const [packName, setPackName] = useState('');
   const [description, setDescription] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -29,7 +28,6 @@ export default function AddPackModal({ isOpen, onClose, onSuccess }) {
           folderPath: folderPath.trim(),
           packName: packName.trim(),
           description: description.trim(),
-          downloadUrl: downloadUrl.trim(),
         }),
       });
 
@@ -100,18 +98,6 @@ export default function AddPackModal({ isOpen, onClose, onSuccess }) {
               placeholder="e.g. Aggressive analog synths and textures"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label className="modal-label">STORAGE / DOWNLOAD URL (OPTIONAL)</label>
-            <input
-              type="url"
-              className="modal-input"
-              placeholder="https://huggingface.co/... or leave blank for auto-upload"
-              value={downloadUrl}
-              onChange={(e) => setDownloadUrl(e.target.value)}
               disabled={loading}
             />
           </div>

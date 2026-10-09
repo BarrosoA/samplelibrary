@@ -8,11 +8,12 @@
     "build": "vite build && node scripts/generate-seo.cjs",
     "preview": "vite preview",
     "manage": "node scripts/manage.cjs",
-    "hf:test": "node scripts/test-hf.cjs",
-    "hf:migrate": "node scripts/migrate-to-hf.cjs"
+    "media:migrate": "node scripts/media.cjs migrate",
+    "media:deploy": "node scripts/media.cjs deploy",
+    "media:rebase": "node scripts/media.cjs rebase"
   },
   "dependencies": {
-    "@huggingface/hub": "^2.17.6",
+    "client-zip": "^2.5.1",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -20,7 +21,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "formidable": "^3.5.4",
-    "googleapis": "^185.0.0",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "wrangler": "^4.149.0"
   }
 }

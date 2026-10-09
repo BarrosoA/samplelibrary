@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Play, Pause, Download, FolderArchive, Loader2, Check } from 'lucide-react';
-import { triggerDirectDownload } from '../utils/download';
+import { canDownloadTrack, downloadPack, downloadTrack } from '../utils/download';
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function PackDetail({
   pack,
@@ -15,60 +17,40 @@ export default function PackDetail({
   const [downloadStates, setDownloadStates] = useState({});
   const [downloadAllState, setDownloadAllState] = useState('idle');
 
-  const handleDownloadTrack = (e, track) => {
-    e.stopPropagation();
-    if (!track?.downloadUrl || downloadStates[track.id]) return;
-
-    setDownloadStates((prev) => ({ ...prev, [track.id]: 'loading' }));
-    triggerDirectDownload(track.downloadUrl);
-
-    setTimeout(() => {
-      setDownloadStates((prev) => ({ ...prev, [track.id]: 'done' }));
-      setTimeout(() => {
-        setDownloadStates((prev) => {
-          const next = { ...prev };
-          delete next[track.id];
-          return next;
-        });
-      }, 1400);
-    }, 2400);
-  };
-
-  const handleDownloadAll = () => {
-    if (downloadAllState !== 'idle') return;
-
-    // check if pack has a dedicated zip file link
-    const isMockFolder = pack.downloadUrl?.includes('drive/folders/1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u');
-    if (pack.downloadUrl && !isMockFolder) {
-      if (pack.downloadUrl.includes('export=download')) {
-        setDownloadAllState('loading');
-        triggerDirectDownload(pack.downloadUrl);
-        setTimeout(() => {
-          setDownloadAllState('done');
-          setTimeout(() => setDownloadAllState('idle'), 1400);
-        }, 2400);
-      } else {
-        window.open(pack.downloadUrl, '_blank', 'noopener,noreferrer');
-      }
-      return;
-    }
-
-    // batch download all tracks directly
-    if (tracks.length === 0) return;
-    setDownloadAllState('loading');
-    tracks.forEach((track, index) => {
-      if (track.downloadUrl) {
-        setTimeout(() => {
-          triggerDirectDownload(track.downloadUrl);
-        }, index * 600);
-      }
+  const clearTrackState = (trackId) =>
+    setDownloadStates((prev) => {
+      const next = { ...prev };
+      delete next[trackId];
+      return next;
     });
 
-    const totalDelay = Math.max(2400, tracks.length * 600 + 1000);
-    setTimeout(() => {
+  const handleDownloadTrack = async (e, track) => {
+    e.stopPropagation();
+    if (!canDownloadTrack(track) || downloadStates[track.id]) return;
+
+    setDownloadStates((prev) => ({ ...prev, [track.id]: 'loading' }));
+    try {
+      await Promise.all([downloadTrack(pack, track), wait(2400)]);
+      setDownloadStates((prev) => ({ ...prev, [track.id]: 'done' }));
+      setTimeout(() => clearTrackState(track.id), 1400);
+    } catch (err) {
+      console.error('Download failed:', err);
+      clearTrackState(track.id);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (downloadAllState !== 'idle' || tracks.length === 0) return;
+
+    setDownloadAllState('loading');
+    try {
+      await Promise.all([downloadPack(pack), wait(2400)]);
       setDownloadAllState('done');
       setTimeout(() => setDownloadAllState('idle'), 1400);
-    }, totalDelay);
+    } catch (err) {
+      console.error('Pack download failed:', err);
+      setDownloadAllState('idle');
+    }
   };
 
   const formatSeconds = (sec) => {

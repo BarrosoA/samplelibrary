@@ -6,7 +6,6 @@
       "cover": "/images/custom-pack-untitled-pack-0558-1791529546095.jpg",
       "trackCount": 1,
       "description": "Guitar samples inspired in the emotion of fado.",
-      "downloadUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/tree/main/masters/untitled-pack-0558",
       "format": "WAV",
       "license": "Royalty-Free",
       "tracks": [
@@ -17,9 +16,18 @@
           "key": "Cm",
           "instrument": "Master Sample",
           "duration": 377.7,
-          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/untitled-pack-0558-1-310.opus",
-          "downloadUrl": "https://drive.google.com/uc?export=download&id=1fpPG0XHA6hH7RAy45sA-mqn3q6f8hz31",
-          "format": "WAV"
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/0f44f9a5818c0abe7966e62c.opus",
+          "format": "WAV",
+          "master": {
+            "filename": "fado rosa 122 Cmin @noluvmusic.wav",
+            "size": 99940906,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/d79ab5cc1bf8ac027382ff48.0",
+              "https://musicportfolio-3na.pages.dev/m/d79ab5cc1bf8ac027382ff48.1",
+              "https://musicportfolio-3na.pages.dev/m/d79ab5cc1bf8ac027382ff48.2",
+              "https://musicportfolio-3na.pages.dev/m/d79ab5cc1bf8ac027382ff48.3"
+            ]
+          }
         }
       ]
     },
@@ -29,7 +37,6 @@
       "cover": "/images/pack-cover.jpg",
       "trackCount": 2,
       "description": "",
-      "downloadUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/tree/main/masters/unreleased-01",
       "format": "WAV",
       "license": "Royalty-Free",
       "tracks": [
@@ -40,9 +47,17 @@
           "key": "Bbm",
           "instrument": "Master Sample",
           "duration": 241.78,
-          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/words-135-bbm.opus",
-          "downloadUrl": "https://drive.google.com/uc?export=download&id=1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u",
-          "format": "WAV"
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/3c5829d788eb4779f9e86115.opus",
+          "format": "WAV",
+          "master": {
+            "filename": "words 135 Bbm @noluvmusic.wav",
+            "size": 63974584,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/41a5ecdefe9ebed748e8a90e.0",
+              "https://musicportfolio-3na.pages.dev/m/41a5ecdefe9ebed748e8a90e.1",
+              "https://musicportfolio-3na.pages.dev/m/41a5ecdefe9ebed748e8a90e.2"
+            ]
+          }
         },
         {
           "id": "track-galeria-105",
@@ -51,9 +66,15 @@
           "key": "C#m",
           "instrument": "Master Sample",
           "duration": 111.47,
-          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/galeria-105-csharp-min.opus",
-          "downloadUrl": "https://drive.google.com/uc?export=download&id=1KxhlELkrHAZ3do0Rv8y9nZqgERVZrKZq",
-          "format": "WAV"
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/f8c44b93e939c64c6788bc99.opus",
+          "format": "WAV",
+          "master": {
+            "filename": "galeria_105bpm_c#min_sample_siarbeats_x_noluv.wav",
+            "size": 19663536,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/1c865589fa66829089ef5893.0"
+            ]
+          }
         }
       ]
     }

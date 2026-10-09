@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
-const hf = require('./hf-uploader.cjs');
-const gdrive = require('./gdrive-uploader.cjs');
+const media = require('./media-store.cjs');
 
 const PUBLIC_TRACKS_PATH = path.resolve(__dirname, '../../public/tracks.json');
 const SRC_TRACKS_PATH = path.resolve(__dirname, '../../src/data/tracks.json');
-const AUDIO_DIR = path.resolve(__dirname, '../../public/audio');
 const IMAGES_DIR = path.resolve(__dirname, '../../public/images');
 
 function loadCatalogue() {
@@ -35,19 +34,7 @@ function deleteTrack(packId, trackId) {
   if (trackIndex === -1) throw new Error(`track ${trackId} not found in pack ${packId}`);
 
   const [removedTrack] = pack.tracks.splice(trackIndex, 1);
-
-  // remove preview file if local
-  if (removedTrack.previewUrl && removedTrack.previewUrl.startsWith('/audio/')) {
-    const filename = path.basename(removedTrack.previewUrl);
-    const filePath = path.join(AUDIO_DIR, filename);
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`could not delete preview file ${filePath}:`, err.message);
-      }
-    }
-  }
+  media.retireTracks([removedTrack], data);
 
   saveCatalogue(data);
   return { success: true, removedTrack };
@@ -123,19 +110,7 @@ function deletePack(packId) {
   if (packIndex === -1) throw new Error(`pack ${packId} not found`);
 
   const [pack] = data.packs.splice(packIndex, 1);
-
-  // delete preview files
-  (pack.tracks || []).forEach((t) => {
-    if (t.previewUrl && t.previewUrl.startsWith('/audio/')) {
-      const filename = path.basename(t.previewUrl);
-      const filePath = path.join(AUDIO_DIR, filename);
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-        } catch (e) {}
-      }
-    }
-  });
+  media.retireTracks(pack.tracks || [], data);
 
   // delete cover if custom
   if (pack.cover && pack.cover.startsWith('/images/custom-')) {
@@ -209,16 +184,35 @@ function probeDuration(filePath) {
   }
 }
 
-function encodePreviewAudio(inputFilePath, outputFilename) {
-  const outPath = path.join(AUDIO_DIR, outputFilename);
-  execSync(
-    `ffmpeg -y -i "${inputFilePath}" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
-    { stdio: 'pipe' }
-  );
-  return `/audio/${outputFilename}`;
+function encodePreviewAudio(inputFilePath) {
+  const outPath = path.join(os.tmpdir(), `preview-${process.pid}-${Date.now()}.opus`);
+  try {
+    execSync(
+      `ffmpeg -y -i "${inputFilePath}" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
+      { stdio: 'pipe' }
+    );
+    return media.addPreview(outPath);
+  } finally {
+    fs.rmSync(outPath, { force: true });
+  }
 }
 
-async function importPackFromStaging({ folderPath, packName, description, downloadUrl }) {
+function buildTrack({ id, audioPath, originalName }) {
+  const meta = parseAudioMetadataFromFilename(originalName);
+  return {
+    id,
+    title: meta.title,
+    bpm: meta.bpm,
+    key: meta.key,
+    instrument: 'Master Sample',
+    duration: probeDuration(audioPath),
+    previewUrl: encodePreviewAudio(audioPath),
+    master: media.addMaster(audioPath, originalName),
+    format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
+  };
+}
+
+async function importPackFromStaging({ folderPath, packName, description }) {
   if (!fs.existsSync(folderPath)) {
     throw new Error(`staging folder ${folderPath} does not exist`);
   }
@@ -255,48 +249,13 @@ async function importPackFromStaging({ folderPath, packName, description, downlo
     throw new Error(`no audio files found in ${folderPath}`);
   }
 
-  let finalPackDownloadUrl = downloadUrl || '';
-  const tracks = [];
-  for (let index = 0; index < audioFiles.length; index++) {
-    const file = audioFiles[index];
-    const fullAudioPath = path.join(folderPath, file);
-    const meta = parseAudioMetadataFromFilename(file);
-    const duration = probeDuration(fullAudioPath);
-    const trackSlug = `${slug}-${index + 1}`;
-    const previewFilename = `${trackSlug}.opus`;
-    let previewUrl = encodePreviewAudio(fullAudioPath, previewFilename);
-    let trackDownloadUrl = finalPackDownloadUrl;
-
-    if (hf.isConfigured()) {
-      try {
-        const previewFilePath = path.join(AUDIO_DIR, previewFilename);
-        const hfRes = await hf.uploadTrackAssets({
-          packSlug: slug,
-          originalFilePath: fullAudioPath,
-          originalFileName: file,
-          previewFilePath,
-          previewFileName: previewFilename,
-        });
-        if (hfRes.previewUrl) previewUrl = hfRes.previewUrl;
-        if (hfRes.downloadUrl) trackDownloadUrl = hfRes.downloadUrl;
-        if (!finalPackDownloadUrl && hfRes.packUrl) finalPackDownloadUrl = hfRes.packUrl;
-      } catch (hfErr) {
-        console.warn(`[HF] Staging upload failed for ${file}:`, hfErr.message);
-      }
-    }
-
-    tracks.push({
-      id: trackSlug,
-      title: meta.title,
-      bpm: meta.bpm,
-      key: meta.key,
-      instrument: 'Master Sample',
-      duration,
-      previewUrl,
-      downloadUrl: trackDownloadUrl,
-      format: path.extname(file).replace('.', '').toUpperCase(),
-    });
-  }
+  const tracks = audioFiles.map((file, index) =>
+    buildTrack({
+      id: `${slug}-${index + 1}`,
+      audioPath: path.join(folderPath, file),
+      originalName: file,
+    })
+  );
 
   const newPack = {
     id: `pack-${slug}`,
@@ -304,7 +263,6 @@ async function importPackFromStaging({ folderPath, packName, description, downlo
     cover: coverPath,
     trackCount: tracks.length,
     description: description ? description.trim() : '',
-    downloadUrl: finalPackDownloadUrl,
     format: 'WAV',
     license: 'Royalty-Free',
     tracks,
@@ -351,7 +309,6 @@ function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
     cover: '/images/pack-cover.jpg',
     trackCount: 0,
     description: '',
-    downloadUrl: '',
     format: 'WAV',
     license: 'Royalty-Free',
     tracks: [],
@@ -398,63 +355,12 @@ async function addTracksToPack(packId, files) {
   const addedTracks = [];
   for (const file of files) {
     const originalName = file.originalFilename || path.basename(file.filepath || file.path);
-    const tempPath = file.filepath || file.path;
-    const meta = parseAudioMetadataFromFilename(originalName);
-    const duration = probeDuration(tempPath);
-
     const trackIndex = pack.tracks.length + 1;
-    const trackSlug = `${pack.id.replace(/^pack-/, '')}-${trackIndex}-${Date.now().toString().slice(-3)}`;
-    const previewFilename = `${trackSlug}.opus`;
-    let previewUrl = encodePreviewAudio(tempPath, previewFilename);
-
-    let individualDownloadUrl = pack.downloadUrl || '';
-
-    // upload preview and master to Hugging Face if configured
-    if (hf.isConfigured()) {
-      try {
-        const previewFilePath = path.join(AUDIO_DIR, previewFilename);
-        const hfRes = await hf.uploadTrackAssets({
-          packSlug: pack.id.replace(/^pack-/, ''),
-          originalFilePath: tempPath,
-          originalFileName: originalName,
-          previewFilePath,
-          previewFileName: previewFilename,
-        });
-        if (hfRes.previewUrl) previewUrl = hfRes.previewUrl;
-        if (hfRes.downloadUrl) individualDownloadUrl = hfRes.downloadUrl;
-        if (!pack.downloadUrl && hfRes.packUrl) {
-          pack.downloadUrl = hfRes.packUrl;
-        }
-      } catch (hfErr) {
-        console.warn(`[HF] Could not upload ${originalName}:`, hfErr.message);
-      }
-    } else {
-      // fallback to Google Drive if credentials available
-      try {
-        const driveUpload = await gdrive.uploadFileToDrive(pack.name, tempPath, originalName);
-        if (driveUpload.success) {
-          individualDownloadUrl = driveUpload.downloadUrl;
-          if (!pack.downloadUrl) {
-            pack.downloadUrl = driveUpload.folderUrl;
-          }
-        }
-      } catch (gErr) {
-        console.warn(`[GDrive] Could not upload ${originalName}:`, gErr.message);
-      }
-    }
-
-    const newTrack = {
-      id: trackSlug,
-      title: meta.title,
-      bpm: meta.bpm,
-      key: meta.key,
-      instrument: 'Master Sample',
-      duration,
-      previewUrl,
-      downloadUrl: individualDownloadUrl,
-      format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
-    };
-
+    const newTrack = buildTrack({
+      id: `${pack.id.replace(/^pack-/, '')}-${trackIndex}-${Date.now().toString().slice(-3)}`,
+      audioPath: file.filepath || file.path,
+      originalName,
+    });
     pack.tracks.push(newTrack);
     addedTracks.push(newTrack);
   }
@@ -466,9 +372,13 @@ async function addTracksToPack(packId, files) {
 function publishToGit() {
   try {
     const projectRoot = path.resolve(__dirname, '../..');
+
+    // media must be live before the catalogue that points at it
+    const mediaResult = media.deploy();
+
     const statusBefore = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf8' }).trim();
     if (!statusBefore) {
-      return { success: true, message: 'Everything is already up to date on Git. No pending changes to publish.' };
+      return { success: true, message: `${mediaResult.message} Catalogue already up to date on GitHub.` };
     }
 
     execSync('git add -A', { cwd: projectRoot });
@@ -484,7 +394,7 @@ function publishToGit() {
 
     return {
       success: true,
-      message: 'Successfully published to GitHub. Vercel will deploy your live updates in ~60 seconds.',
+      message: `${mediaResult.message} Catalogue pushed to GitHub. Vercel will deploy your live updates in ~60 seconds.`,
     };
   } catch (err) {
     console.error('[Git Publish Error]:', err.message);

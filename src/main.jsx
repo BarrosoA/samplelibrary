@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import Library from './pages/Library';
 import StudioManager from './pages/StudioManager';
+import { registerDownloadWorker } from './utils/download';
 import './styles/main.css';
+
+registerDownloadWorker();
 
 function AppRouter() {
   const [route, setRoute] = useState(window.location.hash);

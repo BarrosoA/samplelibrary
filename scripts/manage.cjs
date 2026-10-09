@@ -21,11 +21,10 @@ async function handleInteractive() {
   console.log('3. Move sample to another pack');
   console.log('4. Delete an entire pack');
   console.log('5. Sync sample counts');
-  console.log('6. Migrate existing audio to Hugging Face');
-  console.log('7. Test Hugging Face connection');
-  console.log('8. Exit');
+  console.log('6. Upload media to Cloudflare');
+  console.log('7. Exit');
 
-  const choice = await ask(rl, '\nSelect an option [1-8]: ');
+  const choice = await ask(rl, '\nSelect an option [1-7]: ');
 
   try {
     const data = manager.loadCatalogue();
@@ -40,14 +39,12 @@ async function handleInteractive() {
       }
       const packName = await ask(rl, 'Pack name (e.g. DARK VOID): ');
       const description = await ask(rl, 'Description (optional): ');
-      const downloadUrl = await ask(rl, 'Storage / Download URL (optional, blank for auto-HF): ');
 
       console.log('\nProcessing audio files and generating previews...');
       const res = await manager.importPackFromStaging({
         folderPath,
         packName: packName || 'NEW PACK',
         description,
-        downloadUrl,
       });
       console.log(`\nPack imported: ${res.pack.name} with ${res.pack.tracks.length} tracks.`);
     } else if (choice === '2') {
@@ -137,10 +134,7 @@ async function handleInteractive() {
       manager.saveCatalogue(data);
       console.log('Catalogue sample counts synchronized.');
     } else if (choice === '6') {
-      const migrate = require('./migrate-to-hf.cjs');
-      await migrate.migrateCatalogue();
-    } else if (choice === '7') {
-      require('./test-hf.cjs');
+      console.log(require('./lib/media-store.cjs').deploy().message);
     } else {
       console.log('Exiting.');
     }
@@ -172,11 +166,10 @@ if (args.length === 0) {
         manager.deletePack(packId);
         console.log(`Deleted pack ${packId}.`);
       } else if (cmd === '--import') {
-        const [_, folderPath, packName, driveUrl] = args;
+        const [_, folderPath, packName] = args;
         const res = await manager.importPackFromStaging({
           folderPath,
           packName: packName || 'NEW PACK',
-          downloadUrl: driveUrl || '',
         });
         console.log(`Imported ${res.pack.name} with ${res.pack.tracks.length} tracks.`);
     } else {

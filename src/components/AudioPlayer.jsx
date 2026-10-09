@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
-import { triggerDirectDownload } from '../utils/download';
+import { canDownloadTrack, downloadTrack } from '../utils/download';
 
 export default function AudioPlayer({
   currentTrack,
@@ -24,18 +24,23 @@ export default function AudioPlayer({
     setDownloadState('idle');
   }, [currentTrack?.id]);
 
-  const handlePlayerDownload = () => {
-    if (!currentTrack?.downloadUrl || downloadState !== 'idle') return;
+  const handlePlayerDownload = async () => {
+    if (!canDownloadTrack(currentTrack) || downloadState !== 'idle') return;
 
     setDownloadState('loading');
-    triggerDirectDownload(currentTrack.downloadUrl);
-
-    setTimeout(() => {
+    try {
+      await Promise.all([
+        downloadTrack(currentPack, currentTrack),
+        new Promise((resolve) => setTimeout(resolve, 2400)),
+      ]);
       setDownloadState('done');
       setTimeout(() => {
         setDownloadState('idle');
       }, 1400);
-    }, 2400);
+    } catch (err) {
+      console.error('Download failed:', err);
+      setDownloadState('idle');
+    }
   };
 
   useEffect(() => {

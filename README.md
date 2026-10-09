@@ -1,6 +1,6 @@
 # Sample Library
 
-Static catalogue platform for music producers to browse samples, audition in-browser Opus previews, and download lossless WAV/FLAC files directly from Google Drive.
+Static catalogue platform for music producers to browse samples, audition in-browser Opus previews, and download lossless WAV files or whole packs as ZIPs.
 
 ## Operating Constraints and Cost Architecture
 
@@ -15,50 +15,52 @@ Static catalogue platform for music producers to browse samples, audition in-bro
 ## Architecture Overview
 
 ```text
-                 PRODUCER
-                    |
-                    v
-          STATIC FRONTEND WEBSITE
-          GitHub Pages / Vercel
-                    |
-          +---------+---------+
-          |                   |
-          v                   v
-    AUDIO PREVIEWS       DOWNLOAD BUTTON
-          |                   |
-          v                   v
-   FIREBASE HOSTING       GOOGLE DRIVE
-   SPARK PROJECT          FREE ACCOUNT
-          |                   |
-          v                   v
-      OPUS FILES          WAV / FLAC
-                          ZIP SAMPLE PACKS
+  Visitor's browser
+     |
+     +--> Vercel (website, tracks.json, service worker)
+     |
+     +--> Cloudflare Pages project "musicportfolio" (media only)
+            p/<hash>.opus     preview streams
+            m/<hash>.0, .1..  WAV masters split into <=24 MiB parts
 ```
+
+- Cloudflare Pages rejects files over 25 MiB, so Studio Manager splits each master into numbered parts. The service worker (`public/sw.js`) fetches the parts and streams them out as one WAV.
+- "Download all" is zipped in the visitor's browser by the same service worker using [client-zip](https://github.com/Touffy/client-zip), so no pack ZIPs are stored anywhere. If no service worker is available, `src/utils/download.js` builds the file in memory instead.
+- Media file names are content hashes, so files can't be guessed, and they are served with `noindex`/`noai` headers and a deny-all `robots.txt`.
 
 ## Technology Stack
 
 | Component | Technology | Purpose |
 |---|---|---|
 | Frontend | React + Vite | Web interface and audio player |
-| Website hosting | GitHub Pages / Vercel Hobby | Serves static assets |
-| Preview hosting | Firebase Hosting (Spark plan) | Serves compressed audio |
-| Original files | Google Drive (free tier) | Stores WAV/FLAC files and ZIP packs |
-| Catalogue | Static JSON (`tracks.json`) | Stores metadata and URLs |
-| Audio conversion | FFmpeg | Converts lossless audio to Opus previews |
+| Website hosting | Vercel Hobby | Serves the site and catalogue |
+| Media hosting | Cloudflare Pages (free, no card) | Serves Opus previews and WAV parts |
+| Catalogue | Static JSON (`tracks.json`) | Stores metadata and media URLs |
+| Audio conversion | FFmpeg | Converts lossless audio to 128 kbps Opus previews |
 | Version control | GitHub | Source and catalogue tracking |
 
-## Audio Specifications
+## Media Storage
 
-### Preview Audio
-- Format: Opus (`.opus`)
-- Bitrate: 128–160 kbps (144 kbps default in encoding script)
-- Hosting: Dedicated Firebase Hosting Spark project
-- Playback: HTML5 audio API
+The local media folder (default `../samplelibrary-media`, outside the repo) is the master copy of everything on Cloudflare:
 
-### Lossless Audio
-- Format: WAV or FLAC (single files or ZIP bundles)
-- Hosting: Google Drive (shared with "Anyone with the link can view")
-- Download: Direct hyperlink opening Drive destination
+- `deploy/` is uploaded as-is on every deploy. Any file missing from it disappears from the live site, so never delete it, and back it up: Cloudflare has no way to download files back.
+- `removed/` holds files from deleted samples. They are moved here instead of being deleted, and you can empty it by hand.
+
+Optional `.env.local` settings:
+
+```ini
+MEDIA_DIR=../samplelibrary-media
+CF_PAGES_PROJECT=musicportfolio
+MEDIA_BASE_URL=https://musicportfolio.pages.dev
+```
+
+Run `npx wrangler login` once before the first deploy. If Cloudflare assigns the project a different address (e.g. `musicportfolio-abc.pages.dev`), set `MEDIA_BASE_URL` to it and run `npm run media:rebase`.
+
+| Command | What it does |
+|---|---|
+| `npm run media:deploy` | Uploads new media to Cloudflare (Studio Manager's PUBLISH TO LIVE does this first) |
+| `npm run media:migrate` | Pulls tracks that still have old Drive/HF links into the media folder |
+| `npm run media:rebase` | Rewrites catalogue media URLs to the current `MEDIA_BASE_URL` |
 
 ## Repository Layout
 
@@ -117,9 +119,5 @@ chmod +x scripts/encode-previews.sh
 
 ## Publishing Workflow
 
-1. Prepare lossless WAV/FLAC files.
-2. Run `scripts/encode-previews.sh` to produce Opus previews.
-3. Upload lossless files to Google Drive and configure sharing to "Anyone with the link".
-4. Deploy Opus previews to the dedicated Firebase Hosting Spark project.
-5. Update `public/tracks.json` with metadata, preview URLs, and Drive download URLs.
-6. Commit and deploy static site to GitHub Pages or Vercel.
+1. In Studio Manager (`start-studio.bat`), add samples to a pack. Each one gets an Opus preview and split master in the media folder.
+2. Click PUBLISH TO LIVE. This uploads new media to Cloudflare first, then commits and pushes `tracks.json` so Vercel redeploys.
