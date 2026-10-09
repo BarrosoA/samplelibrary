@@ -83,6 +83,10 @@ function catalogueDevPlugin() {
               const result = manager.reorderTracks(payload.packId, payload.trackIds);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
+            } else if (url === '/reorder-packs') {
+              const result = manager.reorderPacks(payload.packIds);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
             } else if (url === '/delete-pack') {
               const result = manager.deletePack(payload.packId);
               res.setHeader('Content-Type', 'application/json');

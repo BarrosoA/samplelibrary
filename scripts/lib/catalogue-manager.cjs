@@ -95,6 +95,27 @@ function reorderTracks(packId, trackIds) {
   return { success: true, tracks: reordered };
 }
 
+function reorderPacks(packIds) {
+  const data = loadCatalogue();
+  const currentPacks = data.packs || [];
+  const packMap = new Map(currentPacks.map((p) => [p.id, p]));
+
+  const reordered = [];
+  packIds.forEach((id) => {
+    if (packMap.has(id)) {
+      reordered.push(packMap.get(id));
+      packMap.delete(id);
+    }
+  });
+
+  // append any remaining packs
+  packMap.forEach((p) => reordered.push(p));
+
+  data.packs = reordered;
+  saveCatalogue(data);
+  return { success: true, packs: reordered };
+}
+
 function deletePack(packId) {
   const data = loadCatalogue();
   const packIndex = (data.packs || []).findIndex((p) => p.id === packId);
@@ -405,6 +426,7 @@ module.exports = {
   deleteTrack,
   moveTrack,
   reorderTracks,
+  reorderPacks,
   deletePack,
   updatePack,
   createBlankPack,

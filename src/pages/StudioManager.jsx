@@ -32,6 +32,8 @@ export default function StudioManager() {
   const [draggedTrack, setDraggedTrack] = useState(null);
   const [dragOverPackId, setDragOverPackId] = useState(null);
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
+  const [draggedPack, setDraggedPack] = useState(null);
+  const [dragOverPackReorderId, setDragOverPackReorderId] = useState(null);
   const [isCoverDragOver, setIsCoverDragOver] = useState(false);
   const [isAudioZoneDragOver, setIsAudioZoneDragOver] = useState(false);
 
@@ -324,6 +326,81 @@ export default function StudioManager() {
     setDragOverTrackId(null);
   };
 
+  // Drag handlers for sidebar packs reordering
+  const handlePackDragStart = (e, pack) => {
+    setDraggedPack(pack);
+    e.dataTransfer.setData('text/plain', JSON.stringify({ packId: pack.id }));
+    e.dataTransfer.effectAllowed = 'move';
+
+    const ghost = document.createElement('div');
+    ghost.className = 'studio-drag-ghost-pill';
+    ghost.innerHTML = `<span class="ghost-title">${pack.name}</span>`;
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, 14, 14);
+
+    setTimeout(() => {
+      if (document.body.contains(ghost)) {
+        document.body.removeChild(ghost);
+      }
+    }, 0);
+  };
+
+  const handlePackDragEnd = () => {
+    setDraggedPack(null);
+    setDragOverPackReorderId(null);
+  };
+
+  const handlePackReorderDragOver = (e, packId) => {
+    if (!draggedPack || draggedPack.id === packId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverPackReorderId !== packId) {
+      setDragOverPackReorderId(packId);
+    }
+  };
+
+  const handlePackReorderDragLeave = (e, packId) => {
+    if (dragOverPackReorderId === packId) {
+      setDragOverPackReorderId(null);
+    }
+  };
+
+  const handlePackReorderDrop = async (e, targetPack) => {
+    e.preventDefault();
+    setDragOverPackReorderId(null);
+    if (!draggedPack || draggedPack.id === targetPack.id) return;
+
+    const packs = catalogue.packs || [];
+    const sourceIdx = packs.findIndex((p) => p.id === draggedPack.id);
+    const targetIdx = packs.findIndex((p) => p.id === targetPack.id);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const newPacks = [...packs];
+    const [moved] = newPacks.splice(sourceIdx, 1);
+    newPacks.splice(targetIdx, 0, moved);
+
+    // optimistic update
+    setCatalogue((prev) => ({
+      ...prev,
+      packs: newPacks,
+    }));
+
+    try {
+      const res = await fetch('/api/manage/reorder-packs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packIds: newPacks.map((p) => p.id),
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save pack order');
+      notify('Reordered packs');
+    } catch (err) {
+      notify(err.message, 'error');
+      fetchCatalogue();
+    }
+  };
+
   // Drop onto sidebar pack (move sample to another pack)
   const handlePackDragOver = (e, packId) => {
     if (!draggedTrack || packId === currentPack?.id) return;
@@ -511,16 +588,40 @@ export default function StudioManager() {
             {(catalogue.packs || []).map((pack) => {
               const isSelected = pack.id === selectedPackId;
               const isDropTarget = pack.id === dragOverPackId;
+              const isReorderTarget = pack.id === dragOverPackReorderId;
+              const isBeingDragged = draggedPack?.id === pack.id;
               const count = pack.tracks ? pack.tracks.length : (pack.trackCount || 0);
 
               return (
                 <div
                   key={pack.id}
-                  className={`studio-pack-item ${isSelected ? 'active' : ''} ${isDropTarget ? 'drop-target' : ''}`}
+                  className={`studio-pack-item ${isSelected ? 'active' : ''} ${isDropTarget ? 'drop-target' : ''} ${isReorderTarget ? 'reorder-target' : ''} ${isBeingDragged ? 'is-dragging' : ''}`}
+                  draggable
+                  onDragStart={(e) => handlePackDragStart(e, pack)}
+                  onDragEnd={handlePackDragEnd}
                   onClick={() => setSelectedPackId(pack.id)}
-                  onDragOver={(e) => handlePackDragOver(e, pack.id)}
-                  onDragLeave={(e) => handlePackDragLeave(e, pack.id)}
-                  onDrop={(e) => handlePackDrop(e, pack)}
+                  onDragOver={(e) => {
+                    if (draggedPack) {
+                      handlePackReorderDragOver(e, pack.id);
+                    } else if (draggedTrack) {
+                      handlePackDragOver(e, pack.id);
+                    }
+                  }}
+                  onDragLeave={(e) => {
+                    if (draggedPack) {
+                      handlePackReorderDragLeave(e, pack.id);
+                    } else if (draggedTrack) {
+                      handlePackDragLeave(e, pack.id);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    if (draggedPack) {
+                      handlePackReorderDrop(e, pack);
+                    } else if (draggedTrack) {
+                      handlePackDrop(e, pack);
+                    }
+                  }}
+                  title="Drag to rearrange pack order"
                 >
                   <img src={pack.cover} alt={pack.name} className="studio-pack-thumb" />
                   <div className="studio-pack-meta">
