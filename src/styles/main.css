@@ -995,11 +995,9 @@ a {
 .studio-badge-dev {
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: #1c1c1c;
-  color: #888888;
-  letter-spacing: 0.05em;
+  color: #777777;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .studio-topbar-right {
@@ -1579,10 +1577,8 @@ a {
 }
 
 .st-badge {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #141414;
-  border: 1px solid #202020;
+  color: #888888;
+  font-variant-numeric: tabular-nums;
 }
 
 .st-col-dur {
