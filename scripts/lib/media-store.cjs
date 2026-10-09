@@ -191,20 +191,66 @@ function ensureProject() {
   }
 }
 
+const AGE_UNITS = { second: 1 / 86400, minute: 1 / 1440, hour: 1 / 24, day: 1, week: 7, month: 30, year: 365 };
+
+// wrangler only reports age as text such as "3 days ago"; anything unreadable counts as brand new
+function parseAgeDays(text) {
+  const m = /^(\d+|an?|a few)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i.exec(String(text || '').trim());
+  if (!m) return 0;
+  const n = /^\d+$/.test(m[1]) ? Number(m[1]) : 1;
+  return n * AGE_UNITS[m[2].toLowerCase()];
+}
+
+// old deployments keep serving retired files at their own URLs, so prune ones that are both old and not recent
+function pruneDeployments() {
+  const { projectName, env } = loadEnvConfig();
+  const keepCount = Math.max(1, Number(env.CF_KEEP_DEPLOYMENTS || process.env.CF_KEEP_DEPLOYMENTS) || 5);
+  const keepDays = Math.max(1, Number(env.CF_KEEP_DAYS || process.env.CF_KEEP_DAYS) || 14);
+
+  const deployments = JSON.parse(wrangler(`pages deployment list --project-name=${projectName} --json`))
+    .map((dep) => ({ id: dep.Id, ageDays: parseAgeDays(dep.Status) }))
+    .filter((dep) => dep.id)
+    .sort((a, b) => a.ageDays - b.ageDays);
+
+  const doomed = deployments.slice(keepCount).filter((dep) => dep.ageDays > keepDays);
+  let removed = 0;
+  for (const dep of doomed) {
+    try {
+      // no --force: cloudflare refuses to delete a deployment that is still live
+      wrangler(`pages deployment delete ${dep.id} --project-name=${projectName}`);
+      removed++;
+    } catch (err) {
+      console.warn(`[media] kept deployment ${dep.id}: ${(err.stderr || err.message).trim().split('\n').pop()}`);
+    }
+  }
+  return { removed, kept: deployments.length - removed, keepCount, keepDays };
+}
+
 function deploy({ force = false } = {}) {
   const d = ensureMediaDir();
   const { projectName } = loadEnvConfig();
   const snapshot = listDeployFiles(d.deploy).sort();
   const previous = fs.existsSync(d.state) ? JSON.parse(fs.readFileSync(d.state, 'utf8')) : [];
 
+  let message;
+  let deployed = false;
   if (!force && JSON.stringify(snapshot) === JSON.stringify(previous)) {
-    return { deployed: false, message: 'Media already up to date on Cloudflare.' };
+    message = 'Media already up to date on Cloudflare.';
+  } else {
+    ensureProject();
+    wrangler(`pages deploy "${d.deploy}" --project-name=${projectName} --branch=main --commit-dirty=true`);
+    fs.writeFileSync(d.state, JSON.stringify(snapshot, null, 2));
+    deployed = true;
+    message = `Uploaded media to Cloudflare Pages (${snapshot.length} files).`;
   }
 
-  ensureProject();
-  wrangler(`pages deploy "${d.deploy}" --project-name=${projectName} --branch=main --commit-dirty=true`);
-  fs.writeFileSync(d.state, JSON.stringify(snapshot, null, 2));
-  return { deployed: true, message: `Uploaded media to Cloudflare Pages (${snapshot.length} files).` };
+  try {
+    const pruned = pruneDeployments();
+    if (pruned.removed) message += ` Removed ${pruned.removed} old snapshot(s).`;
+  } catch (err) {
+    console.warn(`[media] snapshot cleanup skipped: ${err.message.split('\n')[0]}`);
+  }
+  return { deployed, message };
 }
 
 module.exports = {
@@ -215,5 +261,7 @@ module.exports = {
   addMaster,
   retireTracks,
   relPathFromUrl,
+  parseAgeDays,
+  pruneDeployments,
   deploy,
 };

@@ -58,7 +58,7 @@ Run `npx wrangler login` once before the first deploy. If Cloudflare assigns the
 
 | Command | What it does |
 |---|---|
-| `npm run media:deploy` | Uploads new media to Cloudflare (Studio Manager's PUBLISH TO LIVE does this first) |
+| `npm run media:deploy` | Uploads new media to Cloudflare and prunes old snapshots (Studio Manager's PUBLISH TO LIVE does this first) |
 | `npm run media:migrate` | Pulls tracks that still have old Drive/HF links into the media folder |
 | `npm run media:rebase` | Rewrites catalogue media URLs to the current `MEDIA_BASE_URL` |
 
