@@ -6,7 +6,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const manager = require('./scripts/lib/catalogue-manager.cjs');
 
-const formidable = require('formidable');
+const formidablePkg = require('formidable');
+const formidable = typeof formidablePkg === 'function' ? formidablePkg : (formidablePkg.formidable || formidablePkg.default);
 
 function catalogueDevPlugin() {
   return {
