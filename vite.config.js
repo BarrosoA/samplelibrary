@@ -40,6 +40,21 @@ function catalogueDevPlugin() {
       server.middlewares.use('/api/manage', (req, res, next) => {
         if (req.method !== 'POST') return next();
 
+        // browsers send these cross-site without preflight, so other websites could drive the studio
+        const isLocal = (value) => {
+          try {
+            return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(value).hostname);
+          } catch {
+            return false;
+          }
+        };
+        const origin = req.headers.origin;
+        if (!isLocal(`http://${req.headers.host}`) || (origin && !isLocal(origin)) || req.headers['sec-fetch-site'] === 'cross-site') {
+          res.statusCode = 403;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ error: 'Studio Manager only accepts requests from this computer' }));
+        }
+
         const url = req.url;
 
         // multipart file uploads
