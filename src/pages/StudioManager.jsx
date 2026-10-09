@@ -674,13 +674,6 @@ export default function StudioManager() {
                   }
                 }}
               >
-                <div className="studio-table-heading">
-                  <span>SAMPLES ({(currentPack.tracks || []).length})</span>
-                  <span className="studio-drag-help">
-                    {isUploadingAudio ? 'Converting previews with ffmpeg...' : 'Drag & drop WAV/MP3 files here to add audio • Drag rows to reorder'}
-                  </span>
-                </div>
-
                 {isAudioZoneDragOver && (
                   <div className="studio-audio-drop-overlay">
                     <UploadCloud size={28} />
