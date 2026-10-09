@@ -49,9 +49,10 @@ a {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 24px 28px 110px 28px;
-  max-width: 1360px;
+  padding: 32px 24px 120px 24px;
+  max-width: 880px;
   margin: 0 auto;
+  width: 100%;
 }
 
 /* Header bar */
@@ -59,7 +60,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 30px;
+  margin-bottom: 36px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .brand-title {
@@ -134,8 +137,8 @@ a {
 /* Grid of Packs */
 .packs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-  gap: 20px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 210px));
+  gap: 24px 20px;
 }
 
 .pack-item {
@@ -627,10 +630,10 @@ a {
 }
 
 .player-inner {
-  max-width: 960px;
+  max-width: 880px;
   width: 100%;
   display: grid;
-  grid-template-columns: 260px 1fr 190px;
+  grid-template-columns: 240px 1fr 180px;
   align-items: center;
   gap: 24px;
 }
