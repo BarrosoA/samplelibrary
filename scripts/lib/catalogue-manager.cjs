@@ -213,7 +213,7 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
     imageExtensions.includes(path.extname(f).toLowerCase())
   );
 
-  let coverPath = '/images/pack-1.png';
+  let coverPath = '/images/pack-cover.jpg';
   if (coverFile) {
     const ext = path.extname(coverFile).toLowerCase();
     const destName = `custom-${slug}${ext}`;
@@ -304,7 +304,7 @@ function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
   const newPack = {
     id: `pack-${idSlug}`,
     name: name.toUpperCase(),
-    cover: '/images/pack-1.png',
+    cover: '/images/pack-cover.jpg',
     trackCount: 0,
     description: '',
     downloadUrl: '',
