@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="230 390 980 820">
+  <style>
+    .logo { fill: #0f0f0f; }
+    @media (prefers-color-scheme: dark) { .logo { fill: #ffffff; } }
+  </style>
   <defs>
     <path id="band" fill-rule="evenodd" d="M240,800 L288,777 C400,632 560,590 720,590 C880,590 1040,632 1153,777 L1200,800 L1153,823 C1040,968 880,1010 720,1010 C560,1010 400,968 288,823 Z M355,800 C450,702 590,686 720,686 C850,686 990,702 1085,800 C990,898 850,914 720,914 C590,914 450,898 355,800 Z"/>
     <clipPath id="bandL"><rect x="0" y="0" width="695" height="1600"/></clipPath>
@@ -9,7 +13,7 @@
       <use href="#band" fill="#000" stroke="#000" stroke-width="28" clip-path="url(#gapL)"/>
     </mask>
   </defs>
-  <g fill="#fff">
+  <g class="logo">
     <path mask="url(#nMask)" d="M577,401 H654 Q665,401 669,412 L771,803 V417 Q771,401 787,401 H862 Q878,401 878,417 V1182 Q878,1198 862,1198 H786 Q775,1198 771,1187 L668,795 V1182 Q668,1198 652,1198 H577 Q561,1198 561,1182 V417 Q561,401 577,401 Z"/>
     <use href="#band" clip-path="url(#bandL)"/>
     <use href="#band" clip-path="url(#bandR)"/>
