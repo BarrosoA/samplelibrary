@@ -47,12 +47,20 @@ export default function Library() {
     fetchCatalogue();
   }, [fetchCatalogue]);
 
-  // sync url hash with selected pack for browser back/forward navigation
+  // sync url path and hash with selected pack for browser back/forward navigation
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleUrlChange = () => {
+      const path = window.location.pathname;
       const hash = window.location.hash;
-      if (hash.startsWith('#/pack/')) {
-        const packId = decodeURIComponent(hash.replace('#/pack/', ''));
+
+      let packId = null;
+      if (path.startsWith('/pack/')) {
+        packId = decodeURIComponent(path.replace('/pack/', '').replace(/\/$/, ''));
+      } else if (hash.startsWith('#/pack/')) {
+        packId = decodeURIComponent(hash.replace('#/pack/', ''));
+      }
+
+      if (packId) {
         const found = (data.packs || []).find((p) => p.id === packId);
         if (found) setSelectedPack(found);
       } else {
@@ -60,19 +68,23 @@ export default function Library() {
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleUrlChange();
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
   }, [data.packs]);
 
   const handleSelectPack = (pack) => {
     setSelectedPack(pack);
-    window.location.hash = `#/pack/${pack.id}`;
+    window.history.pushState(null, '', `/pack/${pack.id}`);
   };
 
   const handleBackToPacks = () => {
     setSelectedPack(null);
-    window.location.hash = '';
+    window.history.pushState(null, '', '/');
   };
 
   const filteredPacks = useMemo(() => {
