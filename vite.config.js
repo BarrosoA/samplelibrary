@@ -21,7 +21,7 @@ function catalogueDevPlugin() {
         // multipart file uploads
         if (url === '/upload-cover' || url === '/upload-tracks') {
           const form = formidable({ multiples: true });
-          form.parse(req, (err, fields, files) => {
+          form.parse(req, async (err, fields, files) => {
             if (err) {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
@@ -44,7 +44,7 @@ function catalogueDevPlugin() {
                 let trackFiles = files.tracks || files.file || [];
                 if (!Array.isArray(trackFiles)) trackFiles = [trackFiles];
                 if (trackFiles.length === 0) throw new Error('No audio files uploaded');
-                const result = manager.addTracksToPack(packId, trackFiles);
+                const result = await manager.addTracksToPack(packId, trackFiles);
                 res.setHeader('Content-Type', 'application/json');
                 return res.end(JSON.stringify(result));
               }

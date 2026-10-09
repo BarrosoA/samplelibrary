@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const gdrive = require('./gdrive-uploader.cjs');
 
 const PUBLIC_TRACKS_PATH = path.resolve(__dirname, '../../public/tracks.json');
 const SRC_TRACKS_PATH = path.resolve(__dirname, '../../src/data/tracks.json');
@@ -344,7 +345,7 @@ function updatePackCover(packId, tempFilePath, originalFilename) {
   return { success: true, cover: pack.cover, pack };
 }
 
-function addTracksToPack(packId, files) {
+async function addTracksToPack(packId, files) {
   const data = loadCatalogue();
   const pack = (data.packs || []).find((p) => p.id === packId);
   if (!pack) throw new Error(`pack ${packId} not found`);
@@ -352,7 +353,7 @@ function addTracksToPack(packId, files) {
   if (!pack.tracks) pack.tracks = [];
 
   const addedTracks = [];
-  files.forEach((file) => {
+  for (const file of files) {
     const originalName = file.originalFilename || path.basename(file.filepath || file.path);
     const tempPath = file.filepath || file.path;
     const meta = parseAudioMetadataFromFilename(originalName);
@@ -363,6 +364,21 @@ function addTracksToPack(packId, files) {
     const previewFilename = `${trackSlug}.opus`;
     const previewUrl = encodePreviewAudio(tempPath, previewFilename);
 
+    let individualDownloadUrl = pack.downloadUrl || '';
+
+    // upload full master to Google Drive if credentials available
+    try {
+      const driveUpload = await gdrive.uploadFileToDrive(pack.name, tempPath, originalName);
+      if (driveUpload.success) {
+        individualDownloadUrl = driveUpload.downloadUrl;
+        if (!pack.downloadUrl) {
+          pack.downloadUrl = driveUpload.folderUrl;
+        }
+      }
+    } catch (gErr) {
+      console.warn(`[GDrive] Could not upload ${originalName}:`, gErr.message);
+    }
+
     const newTrack = {
       id: trackSlug,
       title: meta.title,
@@ -371,13 +387,13 @@ function addTracksToPack(packId, files) {
       instrument: 'Master Sample',
       duration,
       previewUrl,
-      downloadUrl: pack.downloadUrl || '',
+      downloadUrl: individualDownloadUrl,
       format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
     };
 
     pack.tracks.push(newTrack);
     addedTracks.push(newTrack);
-  });
+  }
 
   saveCatalogue(data);
   return { success: true, tracks: addedTracks, pack };
