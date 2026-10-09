@@ -111,6 +111,5 @@ function catalogueDevPlugin() {
 }
 
 export default defineConfig({
-  root: fs.realpathSync(process.cwd()),
   plugins: [react(), catalogueDevPlugin()],
 });
