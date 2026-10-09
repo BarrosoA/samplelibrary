@@ -1,7 +1,7 @@
 import React from 'react';
-import { ListMusic, Play, Pause } from 'lucide-react';
+import { ListMusic } from 'lucide-react';
 
-export default function PackCard({ pack, onSelectPack, isPlayingThisPack, onQuickPlay }) {
+export default function PackCard({ pack, onSelectPack }) {
   const count = pack.tracks ? pack.tracks.length : (pack.trackCount || 0);
 
   return (
@@ -21,18 +21,6 @@ export default function PackCard({ pack, onSelectPack, isPlayingThisPack, onQuic
         <div className="pack-badge">
           <ListMusic size={13} strokeWidth={2.4} />
           <span>{count}</span>
-        </div>
-
-        <div
-          className="pack-hover-play"
-          onClick={(e) => {
-            e.stopPropagation();
-            onQuickPlay(pack);
-          }}
-        >
-          <div className="pack-hover-btn">
-            {isPlayingThisPack ? <Pause size={17} /> : <Play size={17} style={{ marginLeft: '2px' }} />}
-          </div>
         </div>
       </div>
 

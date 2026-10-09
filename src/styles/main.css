@@ -199,34 +199,6 @@ a {
   letter-spacing: -0.01em;
 }
 
-/* Center play overlay on hover */
-.pack-hover-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.pack-item:hover .pack-hover-play {
-  opacity: 1;
-}
-
-.pack-hover-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #0a0a0a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
 /* Pack Name Underneath */
 .pack-info {
   display: flex;

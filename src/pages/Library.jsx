@@ -131,18 +131,6 @@ export default function Library() {
     }
   };
 
-  const handleQuickPlayPack = (pack) => {
-    if (!pack.tracks || pack.tracks.length === 0) return;
-    const firstTrack = pack.tracks[0];
-    if (activeTrack && activeTrack.id === firstTrack.id) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setActiveTrack(firstTrack);
-      setActiveTrackPack(pack);
-      setIsPlaying(true);
-    }
-  };
-
   const handleNext = () => {
     if (!activeTrack || activeNavigationTracks.length === 0) return;
     const idx = activeNavigationTracks.findIndex((item) => item.track.id === activeTrack.id);
@@ -219,20 +207,13 @@ export default function Library() {
           )}
 
           <section className="packs-grid">
-            {filteredPacks.map((pack) => {
-              const isPlayingThisPack =
-                isPlaying && activeTrackPack?.id === pack.id;
-
-              return (
-                <PackCard
-                  key={pack.id}
-                  pack={pack}
-                  onSelectPack={handleSelectPack}
-                  isPlayingThisPack={isPlayingThisPack}
-                  onQuickPlay={handleQuickPlayPack}
-                />
-              );
-            })}
+            {filteredPacks.map((pack) => (
+              <PackCard
+                key={pack.id}
+                pack={pack}
+                onSelectPack={handleSelectPack}
+              />
+            ))}
           </section>
         </>
       )}
