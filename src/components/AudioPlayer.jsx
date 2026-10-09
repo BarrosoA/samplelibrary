@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
 import { triggerDirectDownload } from '../utils/download';
 
 export default function AudioPlayer({
@@ -18,6 +18,25 @@ export default function AudioPlayer({
   const [isLooping, setIsLooping] = useState(true);
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
+  const [downloadState, setDownloadState] = useState('idle');
+
+  useEffect(() => {
+    setDownloadState('idle');
+  }, [currentTrack?.id]);
+
+  const handlePlayerDownload = () => {
+    if (!currentTrack?.downloadUrl || downloadState !== 'idle') return;
+
+    setDownloadState('loading');
+    triggerDirectDownload(currentTrack.downloadUrl);
+
+    setTimeout(() => {
+      setDownloadState('done');
+      setTimeout(() => {
+        setDownloadState('idle');
+      }, 1400);
+    }, 2400);
+  };
 
   useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
@@ -184,11 +203,24 @@ export default function AudioPlayer({
 
           <button
             type="button"
-            onClick={() => triggerDirectDownload(currentTrack.downloadUrl)}
-            className="player-download-btn"
-            title={`Download lossless ${currentTrack.format || 'file'} from Google Drive`}
+            onClick={handlePlayerDownload}
+            className={`player-download-btn ${downloadState !== 'idle' ? `is-${downloadState}` : ''}`}
+            title={
+              downloadState === 'loading'
+                ? 'Download starting...'
+                : downloadState === 'done'
+                ? 'Download started'
+                : `Download lossless ${currentTrack.format || 'file'} from Google Drive`
+            }
+            disabled={downloadState !== 'idle'}
           >
-            <Download size={15} />
+            {downloadState === 'loading' ? (
+              <Loader2 size={15} className="spin-icon" />
+            ) : downloadState === 'done' ? (
+              <Check size={15} />
+            ) : (
+              <Download size={15} />
+            )}
           </button>
         </div>
       </div>

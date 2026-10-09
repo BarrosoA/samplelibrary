@@ -1,6 +1,6 @@
 export function triggerDirectDownload(url) {
   if (!url) return;
-  // silent download via hidden iframe avoids opening blank browser tabs
+  // silent iframe download, no blank tab
   const iframe = document.createElement('iframe');
   iframe.style.display = 'none';
   iframe.src = url;
@@ -11,3 +11,4 @@ export function triggerDirectDownload(url) {
     }
   }, 30000);
 }
+

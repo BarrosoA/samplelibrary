@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeft, Play, Pause, Download, FolderArchive } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Play, Pause, Download, FolderArchive, Loader2, Check } from 'lucide-react';
 import { triggerDirectDownload } from '../utils/download';
 
 export default function PackDetail({
@@ -12,6 +12,26 @@ export default function PackDetail({
   if (!pack) return null;
 
   const tracks = pack.tracks || [];
+  const [downloadStates, setDownloadStates] = useState({});
+
+  const handleDownloadTrack = (e, track) => {
+    e.stopPropagation();
+    if (!track?.downloadUrl || downloadStates[track.id]) return;
+
+    setDownloadStates((prev) => ({ ...prev, [track.id]: 'loading' }));
+    triggerDirectDownload(track.downloadUrl);
+
+    setTimeout(() => {
+      setDownloadStates((prev) => ({ ...prev, [track.id]: 'done' }));
+      setTimeout(() => {
+        setDownloadStates((prev) => {
+          const next = { ...prev };
+          delete next[track.id];
+          return next;
+        });
+      }, 1400);
+    }, 2400);
+  };
 
   const formatSeconds = (sec) => {
     if (!sec && sec !== 0) return '0:00';
@@ -145,12 +165,33 @@ export default function PackDetail({
                 <div className="col-download" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
-                    className="row-download-btn"
-                    onClick={() => triggerDirectDownload(track.downloadUrl)}
-                    title={`Download lossless ${track.format || 'WAV'} from Google Drive`}
+                    className={`row-download-btn ${downloadStates[track.id] ? `is-${downloadStates[track.id]}` : ''}`}
+                    onClick={(e) => handleDownloadTrack(e, track)}
+                    title={
+                      downloadStates[track.id] === 'loading'
+                        ? 'Download starting...'
+                        : downloadStates[track.id] === 'done'
+                        ? 'Download started'
+                        : `Download lossless ${track.format || 'WAV'} from Google Drive`
+                    }
+                    disabled={Boolean(downloadStates[track.id])}
                   >
-                    <Download size={13} />
-                    <span>{track.format || 'WAV'}</span>
+                    {downloadStates[track.id] === 'loading' ? (
+                      <>
+                        <Loader2 size={13} className="spin-icon" />
+                        <span>STARTING</span>
+                      </>
+                    ) : downloadStates[track.id] === 'done' ? (
+                      <>
+                        <Check size={13} />
+                        <span>STARTED</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={13} />
+                        <span>{track.format || 'WAV'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
