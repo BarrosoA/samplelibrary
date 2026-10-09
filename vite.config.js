@@ -32,13 +32,37 @@ function clientZipWorkerPlugin() {
 const formidablePkg = require('formidable');
 const formidable = typeof formidablePkg === 'function' ? formidablePkg : (formidablePkg.formidable || formidablePkg.default);
 
+const AUDIO_TYPES = { '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio/aiff', '.flac': 'audio/flac' };
+
+function sendFileWithRanges(req, res, file) {
+  const size = fs.statSync(file).size;
+  res.setHeader('Content-Type', AUDIO_TYPES[file.slice(file.lastIndexOf('.')).toLowerCase()] || 'application/octet-stream');
+  res.setHeader('Accept-Ranges', 'bytes');
+  const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+  if (!m || (!m[1] && !m[2])) {
+    res.setHeader('Content-Length', size);
+    return fs.createReadStream(file).pipe(res);
+  }
+  const start = m[1] ? Number(m[1]) : Math.max(0, size - Number(m[2]));
+  const end = m[1] && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  if (start > end || start >= size) {
+    res.statusCode = 416;
+    res.setHeader('Content-Range', `bytes */${size}`);
+    return res.end();
+  }
+  res.statusCode = 206;
+  res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+  res.setHeader('Content-Length', end - start + 1);
+  fs.createReadStream(file, { start, end }).pipe(res);
+}
+
 function catalogueDevPlugin() {
   return {
     name: 'catalogue-dev-middleware',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use('/api/manage', (req, res, next) => {
-        if (req.method !== 'POST') return next();
+        if (req.method !== 'POST' && !(req.method === 'GET' && req.url.startsWith('/inbox-audio?'))) return next();
 
         // browsers send these cross-site without preflight, so other websites could drive the studio
         const isLocal = (value) => {
@@ -57,11 +81,29 @@ function catalogueDevPlugin() {
 
         const url = req.url;
 
+        if (req.method === 'GET') {
+          try {
+            const file = manager.resolveLoopFile(new URL(url, 'http://localhost').searchParams.get('path'));
+            sendFileWithRanges(req, res, file);
+          } catch (err) {
+            res.statusCode = 404;
+            res.end(err.message);
+          }
+          return;
+        }
+
         // multipart file uploads
         if (url === '/upload-cover' || url === '/upload-tracks') {
           const form = formidable({ multiples: true });
           form.parse(req, async (err, fields, files) => {
+            // formidable never deletes its temp copies, which leaked a full WAV per upload
+            const cleanup = () =>
+              Object.values(files || {})
+                .flat()
+                .forEach((f) => f && f.filepath && fs.rmSync(f.filepath, { force: true }));
+
             if (err) {
+              cleanup();
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               return res.end(JSON.stringify({ error: err.message }));
@@ -91,6 +133,8 @@ function catalogueDevPlugin() {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               return res.end(JSON.stringify({ error: handleErr.message }));
+            } finally {
+              cleanup();
             }
           });
           return;
@@ -141,6 +185,18 @@ function catalogueDevPlugin() {
               const result = manager.publishToGit();
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
+            } else if (url === '/inbox') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(manager.listInbox()));
+            } else if (url === '/inbox-add') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(manager.addTrackFromFile(payload.packId, payload.path)));
+            } else if (url === '/inbox-update') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(manager.updateTrackFromFile(payload.path)));
+            } else if (url === '/inbox-dismiss') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(manager.dismissInbox(payload.path)));
             } else {
               res.statusCode = 404;
               res.setHeader('Content-Type', 'application/json');

@@ -41,18 +41,29 @@ Static catalogue platform for music producers to browse samples, audition in-bro
 
 ## Media Storage
 
-The local media folder (default `../samplelibrary-media`, outside the repo) is the master copy of everything on Cloudflare:
+Loops are not duplicated on this PC. A loop exported to `<COMPOSITIONS_DIR>/<year>/<month>/` stays the only full copy: the library just remembers where it is (`sources.json` in the media folder, never in the public catalogue). When you publish, the master parts are rebuilt from those originals in a temporary `staging/` folder, uploaded, and the folder is deleted.
 
-- `deploy/` is uploaded as-is on every deploy. Any file missing from it disappears from the live site, so never delete it, and back it up: Cloudflare has no way to download files back.
-- `removed/` holds files from deleted samples. They are moved here instead of being deleted, and you can empty it by hand.
+- Before every upload each original is checked against its fingerprint. A moved or renamed original is found again automatically. An edited or deleted one stops the publish with a message naming the loop, and nothing is uploaded.
+- Loops added from outside the Compositions folder can't be relied on to stay put, so their parts are kept in `deploy/m/`.
+- `deploy/` holds the previews (about 5% of the WAV size) and any kept parts. Its contents plus the originals are what Cloudflare mirrors, so a file missing at publish time disappears from the site.
+- `removed/` holds files from deleted samples. They are moved there instead of being deleted, and you can empty it by hand.
+
+### NEW LOOPS
+
+Studio Manager lists loops that appear in a month folder after the feature was first opened (project subfolders are ignored). Drag one onto a pack to add it; nothing is added or published automatically. It shows warnings for a missing BPM or key, a misspelled tag, or an exact duplicate. A re-export of a loop that's already in the library gets an UPDATE button, which swaps in the new version. The list only refreshes while Studio Manager is open.
 
 Optional `.env.local` settings:
 
 ```ini
+COMPOSITIONS_DIR=C:/Users/you/Documents/NO LUV/Compositions
 MEDIA_DIR=../samplelibrary-media
 CF_PAGES_PROJECT=musicportfolio
 MEDIA_BASE_URL=https://musicportfolio.pages.dev
+CF_KEEP_DEPLOYMENTS=5
+CF_KEEP_DAYS=14
 ```
+
+Cloudflare keeps every past upload reachable at its own address, which would keep deleted samples downloadable. After each publish, old snapshots are deleted, but only ones that are both outside the newest `CF_KEEP_DEPLOYMENTS` and older than `CF_KEEP_DAYS`. The live snapshot is never deleted.
 
 Run `npx wrangler login` once before the first deploy. If Cloudflare assigns the project a different address (e.g. `musicportfolio-abc.pages.dev`), set `MEDIA_BASE_URL` to it and run `npm run media:rebase`.
 
@@ -61,6 +72,7 @@ Run `npx wrangler login` once before the first deploy. If Cloudflare assigns the
 | `npm run media:deploy` | Uploads new media to Cloudflare and prunes old snapshots (Studio Manager's PUBLISH TO LIVE does this first) |
 | `npm run media:migrate` | Pulls tracks that still have old Drive/HF links into the media folder |
 | `npm run media:rebase` | Rewrites catalogue media URLs to the current `MEDIA_BASE_URL` |
+| `npm run media:adopt` | Drops stored parts for loops whose original is found in the Compositions folder |
 
 ## Repository Layout
 

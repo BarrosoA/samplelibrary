@@ -10,7 +10,8 @@
     "manage": "node scripts/manage.cjs",
     "media:migrate": "node scripts/media.cjs migrate",
     "media:deploy": "node scripts/media.cjs deploy",
-    "media:rebase": "node scripts/media.cjs rebase"
+    "media:rebase": "node scripts/media.cjs rebase",
+    "media:adopt": "node scripts/media.cjs adopt"
   },
   "dependencies": {
     "client-zip": "^2.5.1",

@@ -8,6 +8,7 @@ const ENV_LOCAL_PATH = path.join(PROJECT_ROOT, '.env.local');
 
 // cloudflare pages rejects files over 25 MiB
 const PART_SIZE = 24 * 1024 * 1024;
+const LOOP_EXTENSIONS = ['.wav', '.aif', '.aiff', '.flac'];
 
 function loadEnvConfig() {
   const env = {};
@@ -20,13 +21,14 @@ function loadEnvConfig() {
       }
     });
   }
-  const get = (k) => env[k] || process.env[k] || '';
+  const get = (k) => process.env[k] || env[k] || '';
   const projectName = get('CF_PAGES_PROJECT') || 'musicportfolio';
   return {
     env,
     projectName,
     mediaRoot: path.resolve(PROJECT_ROOT, get('MEDIA_DIR') || '../samplelibrary-media'),
     baseUrl: (get('MEDIA_BASE_URL') || `https://${projectName}.pages.dev`).replace(/\/+$/, ''),
+    compositionsDir: get('COMPOSITIONS_DIR') ? path.resolve(get('COMPOSITIONS_DIR')) : '',
   };
 }
 
@@ -36,8 +38,24 @@ function dirs() {
     root: mediaRoot,
     deploy: path.join(mediaRoot, 'deploy'),
     removed: path.join(mediaRoot, 'removed'),
+    staging: path.join(mediaRoot, 'staging'),
     state: path.join(mediaRoot, 'last-deploy.json'),
+    sources: path.join(mediaRoot, 'sources.json'),
+    inbox: path.join(mediaRoot, 'inbox.json'),
   };
+}
+
+function readJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(file, data) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
 const HEADERS_FILE = `/*
@@ -65,14 +83,22 @@ function ensureMediaDir() {
   return d;
 }
 
+const hashCache = new Map();
+
 function hashFile(filePath) {
+  const st = fs.statSync(filePath);
+  const cacheKey = `${filePath}|${st.size}|${st.mtimeMs}`;
+  if (hashCache.has(cacheKey)) return hashCache.get(cacheKey);
+
   const hash = crypto.createHash('sha256');
   const fd = fs.openSync(filePath, 'r');
   const buf = Buffer.alloc(1024 * 1024);
   let n;
   while ((n = fs.readSync(fd, buf, 0, buf.length, null)) > 0) hash.update(buf.subarray(0, n));
   fs.closeSync(fd);
-  return hash.digest('hex').slice(0, 24);
+  const digest = hash.digest('hex').slice(0, 24);
+  hashCache.set(cacheKey, digest);
+  return digest;
 }
 
 function urlFor(relPath) {
@@ -85,6 +111,46 @@ function relPathFromUrl(url) {
   return url.slice(baseUrl.length + 1);
 }
 
+function masterKey(master) {
+  const rel = master && master.parts && relPathFromUrl(master.parts[0]);
+  return rel ? path.basename(rel).split('.')[0] : null;
+}
+
+// loops are files directly inside <compositions>/<year>/<month>/; deeper folders are project audio
+function isLoopPath(absPath) {
+  const { compositionsDir } = loadEnvConfig();
+  if (!compositionsDir || !absPath) return false;
+  const rel = path.relative(compositionsDir, path.resolve(absPath));
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return false;
+  const segments = rel.split(path.sep);
+  return segments.length === 3 && /^\d{4}$/.test(segments[0]) && LOOP_EXTENSIONS.includes(path.extname(rel).toLowerCase());
+}
+
+function listLoopFiles() {
+  const { compositionsDir } = loadEnvConfig();
+  if (!compositionsDir || !fs.existsSync(compositionsDir)) return [];
+  const subdirs = (dir) => fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => path.join(dir, e.name));
+  const loops = [];
+  for (const yearDir of subdirs(compositionsDir).filter((d) => /^\d{4}$/.test(path.basename(d)))) {
+    for (const monthDir of subdirs(yearDir)) {
+      for (const e of fs.readdirSync(monthDir, { withFileTypes: true })) {
+        const full = path.join(monthDir, e.name);
+        if (e.isFile() && isLoopPath(full)) {
+          const st = fs.statSync(full);
+          // windows keeps the old modified date on copied files, so creation time marks when it arrived
+          loops.push({ path: full, size: st.size, mtimeMs: st.mtimeMs, arrivedMs: Math.max(st.mtimeMs, st.birthtimeMs) });
+        }
+      }
+    }
+  }
+  return loops;
+}
+
+function findSource(key, size) {
+  const match = listLoopFiles().find((f) => f.size === size && hashFile(f.path) === key);
+  return match || null;
+}
+
 function addPreview(localOpusPath) {
   const d = ensureMediaDir();
   const rel = `p/${hashFile(localOpusPath)}.opus`;
@@ -93,31 +159,45 @@ function addPreview(localOpusPath) {
   return urlFor(rel);
 }
 
-function addMaster(localFilePath, filename) {
-  const d = ensureMediaDir();
-  const key = hashFile(localFilePath);
-  const size = fs.statSync(localFilePath).size;
-  const partCount = Math.max(1, Math.ceil(size / PART_SIZE));
-  const parts = [];
-
-  const fd = fs.openSync(localFilePath, 'r');
+function writeParts(sourcePath, key, size, destDir) {
+  const fd = fs.openSync(sourcePath, 'r');
+  const hash = crypto.createHash('sha256');
   try {
+    const partCount = Math.max(1, Math.ceil(size / PART_SIZE));
     for (let i = 0; i < partCount; i++) {
-      const rel = `m/${key}.${i}`;
-      const dest = path.join(d.deploy, rel);
-      if (!fs.existsSync(dest)) {
-        const len = Math.min(PART_SIZE, size - i * PART_SIZE);
-        const buf = Buffer.alloc(len);
-        fs.readSync(fd, buf, 0, len, i * PART_SIZE);
-        fs.writeFileSync(dest, buf);
-      }
-      parts.push(urlFor(rel));
+      const len = Math.min(PART_SIZE, size - i * PART_SIZE);
+      const buf = Buffer.alloc(len);
+      fs.readSync(fd, buf, 0, len, i * PART_SIZE);
+      hash.update(buf);
+      fs.writeFileSync(path.join(destDir, `${key}.${i}`), buf);
     }
   } finally {
     fs.closeSync(fd);
   }
+  if (hash.digest('hex').slice(0, 24) !== key) throw new Error(`${sourcePath} changed while it was being read`);
+}
 
-  return { filename, size, parts };
+function partUrls(key, size) {
+  const partCount = Math.max(1, Math.ceil(size / PART_SIZE));
+  return Array.from({ length: partCount }, (_, i) => urlFor(`m/${key}.${i}`));
+}
+
+// originals inside the compositions folder are referenced, not copied; anything else is kept as parts
+function addMaster(localFilePath, filename, sourceHint) {
+  const d = ensureMediaDir();
+  const key = hashFile(localFilePath);
+  const size = fs.statSync(localFilePath).size;
+
+  const source = isLoopPath(sourceHint) ? { path: path.resolve(sourceHint) } : findSource(key, size);
+  if (source) {
+    const sources = readJson(d.sources, {});
+    sources[key] = { path: source.path, size, mtimeMs: fs.statSync(source.path).mtimeMs };
+    writeJson(d.sources, sources);
+  } else if (!fs.existsSync(path.join(d.deploy, 'm', `${key}.0`))) {
+    writeParts(localFilePath, key, size, path.join(d.deploy, 'm'));
+  }
+
+  return { filename, size, parts: partUrls(key, size) };
 }
 
 function trackMediaUrls(track) {
@@ -131,7 +211,13 @@ function trackMediaUrls(track) {
 function retireTracks(removedTracks, catalogue) {
   const d = dirs();
   const stillUsed = new Set();
-  (catalogue.packs || []).forEach((p) => (p.tracks || []).forEach((t) => trackMediaUrls(t).forEach((u) => stillUsed.add(u))));
+  const keysInUse = new Set();
+  (catalogue.packs || []).forEach((p) =>
+    (p.tracks || []).forEach((t) => {
+      trackMediaUrls(t).forEach((u) => stillUsed.add(u));
+      keysInUse.add(masterKey(t.master));
+    })
+  );
 
   removedTracks.flatMap(trackMediaUrls).forEach((url) => {
     if (stillUsed.has(url)) return;
@@ -143,6 +229,104 @@ function retireTracks(removedTracks, catalogue) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.renameSync(src, dest);
   });
+
+  const sources = readJson(d.sources, {});
+  let changed = false;
+  removedTracks.forEach((t) => {
+    const key = masterKey(t.master);
+    if (key && sources[key] && !keysInUse.has(key)) {
+      delete sources[key];
+      changed = true;
+    }
+  });
+  if (changed) writeJson(d.sources, sources);
+}
+
+function catalogueMasters(catalogue) {
+  const masters = new Map();
+  (catalogue.packs || []).forEach((p) =>
+    (p.tracks || []).forEach((t) => {
+      const key = masterKey(t.master);
+      if (key && !masters.has(key)) masters.set(key, { key, size: t.master.size, title: t.title, pack: p.name });
+    })
+  );
+  return [...masters.values()];
+}
+
+// confirms the original still matches; follows it if it was moved or renamed
+function resolveSource(key, size, sources) {
+  const entry = sources[key];
+  if (entry && fs.existsSync(entry.path)) {
+    const st = fs.statSync(entry.path);
+    if (st.size === size && (st.mtimeMs === entry.mtimeMs || hashFile(entry.path) === key)) {
+      entry.mtimeMs = st.mtimeMs;
+      return { path: entry.path };
+    }
+  }
+  const found = findSource(key, size);
+  if (found) {
+    sources[key] = { path: found.path, size, mtimeMs: found.mtimeMs };
+    return { path: found.path, relinked: true };
+  }
+  return { problem: entry && fs.existsSync(entry.path) ? 'changed' : 'missing', path: entry && entry.path };
+}
+
+function hasKeptParts(key, size) {
+  const d = dirs();
+  return partUrls(key, size).every((u) => fs.existsSync(path.join(d.deploy, relPathFromUrl(u))));
+}
+
+function checkSources(catalogue) {
+  const d = dirs();
+  const sources = readJson(d.sources, {});
+  const problems = [];
+  const resolved = [];
+  for (const m of catalogueMasters(catalogue)) {
+    if (hasKeptParts(m.key, m.size)) continue;
+    const r = resolveSource(m.key, m.size, sources);
+    if (r.problem) problems.push({ ...m, ...r });
+    else resolved.push({ ...m, ...r });
+  }
+  writeJson(d.sources, sources);
+  return { problems, resolved };
+}
+
+function describeProblems(problems) {
+  return problems
+    .map((p) =>
+      p.problem === 'changed'
+        ? `"${p.title}" (${p.pack}): the original file changed since it was added (${p.path}). Use UPDATE in NEW LOOPS, or restore the old export.`
+        : `"${p.title}" (${p.pack}): the original file can't be found${p.path ? ` (was ${p.path})` : ''}. Put it back in your Compositions folder.`
+    )
+    .join(' ');
+}
+
+function linkOrCopy(src, dest) {
+  try {
+    fs.linkSync(src, dest);
+  } catch {
+    fs.copyFileSync(src, dest);
+  }
+}
+
+function buildStaging(catalogue) {
+  const d = ensureMediaDir();
+  const { problems, resolved } = checkSources(catalogue);
+  if (problems.length) throw new Error(`Publish stopped, nothing was uploaded. ${describeProblems(problems)}`);
+
+  fs.rmSync(d.staging, { recursive: true, force: true });
+  const mirror = (srcDir, destDir) => {
+    fs.mkdirSync(destDir, { recursive: true });
+    for (const e of fs.readdirSync(srcDir, { withFileTypes: true })) {
+      const s = path.join(srcDir, e.name);
+      const t = path.join(destDir, e.name);
+      if (e.isDirectory()) mirror(s, t);
+      else linkOrCopy(s, t);
+    }
+  };
+  mirror(d.deploy, d.staging);
+  for (const m of resolved) writeParts(m.path, m.key, m.size, path.join(d.staging, 'm'));
+  return d.staging;
 }
 
 function listDeployFiles(dir, base = dir) {
@@ -166,6 +350,7 @@ function wrangler(args, extraEnv) {
     env: { ...childEnv, ...extraEnv },
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
+    maxBuffer: 64 * 1024 * 1024,
   });
 }
 
@@ -226,22 +411,30 @@ function pruneDeployments() {
   return { removed, kept: deployments.length - removed, keepCount, keepDays };
 }
 
-function deploy({ force = false } = {}) {
+function deploy({ catalogue, force = false }) {
   const d = ensureMediaDir();
   const { projectName } = loadEnvConfig();
-  const snapshot = listDeployFiles(d.deploy).sort();
-  const previous = fs.existsSync(d.state) ? JSON.parse(fs.readFileSync(d.state, 'utf8')) : [];
+  const snapshot = [...listDeployFiles(d.deploy), ...catalogueMasters(catalogue).map((m) => `master:${m.key}`)].sort();
+  const previous = readJson(d.state, []);
 
   let message;
   let deployed = false;
   if (!force && JSON.stringify(snapshot) === JSON.stringify(previous)) {
+    // still catch originals that were deleted or edited since the last upload
+    const { problems } = checkSources(catalogue);
     message = 'Media already up to date on Cloudflare.';
+    if (problems.length) message += ` Warning: ${describeProblems(problems)}`;
   } else {
-    ensureProject();
-    wrangler(`pages deploy "${d.deploy}" --project-name=${projectName} --branch=main --commit-dirty=true`);
-    fs.writeFileSync(d.state, JSON.stringify(snapshot, null, 2));
+    const staging = buildStaging(catalogue);
+    try {
+      ensureProject();
+      wrangler(`pages deploy "${staging}" --project-name=${projectName} --branch=main --commit-dirty=true`);
+    } finally {
+      fs.rmSync(staging, { recursive: true, force: true });
+    }
+    writeJson(d.state, snapshot);
     deployed = true;
-    message = `Uploaded media to Cloudflare Pages (${snapshot.length} files).`;
+    message = 'Uploaded media to Cloudflare Pages.';
   }
 
   try {
@@ -253,14 +446,66 @@ function deploy({ force = false } = {}) {
   return { deployed, message };
 }
 
+// drops stored parts for masters whose original is found in the compositions folder
+function adoptKeptMasters(catalogue) {
+  const d = ensureMediaDir();
+  const sources = readJson(d.sources, {});
+  const result = { adopted: [], kept: [] };
+  for (const m of catalogueMasters(catalogue)) {
+    if (!hasKeptParts(m.key, m.size)) continue;
+    const found = findSource(m.key, m.size);
+    if (!found) {
+      result.kept.push(m.title);
+      continue;
+    }
+    sources[m.key] = { path: found.path, size: m.size, mtimeMs: found.mtimeMs };
+    writeJson(d.sources, sources);
+    partUrls(m.key, m.size).forEach((u) => fs.rmSync(path.join(d.deploy, relPathFromUrl(u))));
+    result.adopted.push(`${m.title} -> ${found.path}`);
+  }
+  return result;
+}
+
+function readSources() {
+  return readJson(dirs().sources, {});
+}
+
+function readInboxState() {
+  const d = dirs();
+  let state = readJson(d.inbox, null);
+  if (!state) {
+    // everything already in the folder when the feature is first used counts as seen
+    state = { baselineMs: Date.now(), dismissed: {} };
+    writeJson(d.inbox, state);
+  }
+  return state;
+}
+
+function dismissInboxFile(filePath) {
+  const d = dirs();
+  const state = readInboxState();
+  state.dismissed[path.resolve(filePath)] = fs.statSync(filePath).mtimeMs;
+  writeJson(d.inbox, state);
+}
+
 module.exports = {
   PART_SIZE,
   loadEnvConfig,
   ensureMediaDir,
+  hashFile,
   addPreview,
   addMaster,
+  masterKey,
+  isLoopPath,
+  listLoopFiles,
   retireTracks,
   relPathFromUrl,
+  checkSources,
+  describeProblems,
+  adoptKeptMasters,
+  readSources,
+  readInboxState,
+  dismissInboxFile,
   parseAgeDays,
   pruneDeployments,
   deploy,

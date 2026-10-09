@@ -1725,3 +1725,70 @@ a {
     justify-content: space-between;
   }
 }
+
+/* NEW LOOPS (manager-only inbox of fresh exports) */
+.studio-new-loops-item {
+  margin: 0 8px 6px;
+  border: 1px dashed #2e2e2e;
+  position: relative;
+}
+
+.studio-new-loops-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9a9a9a;
+}
+
+.studio-new-loops-count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.studio-new-loops-header {
+  padding: 24px 24px 8px;
+}
+
+.studio-loop-note,
+.studio-loop-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 0.7rem;
+}
+
+.studio-loop-note {
+  color: #8ab4ff;
+}
+
+.studio-loop-warning {
+  color: #e0a84a;
+}
+
+.studio-loop-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+.st-btn-update {
+  background: transparent;
+  border: none;
+  color: #8ab4ff;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.st-btn-update:hover {
+  background: rgba(138, 180, 255, 0.12);
+}

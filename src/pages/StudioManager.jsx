@@ -13,9 +13,15 @@ import {
   FolderInput,
   Camera,
   UploadCloud,
-  Loader2
+  Loader2,
+  Inbox,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import AddPackModal from '../components/AddPackModal';
+
+const NEW_LOOPS_ID = '__new_loops__';
+const inboxAudioUrl = (filePath) => `/api/manage/inbox-audio?path=${encodeURIComponent(filePath)}`;
 
 export default function StudioManager() {
   const [catalogue, setCatalogue] = useState({ packs: [] });
@@ -38,8 +44,28 @@ export default function StudioManager() {
   const [isCoverDragOver, setIsCoverDragOver] = useState(false);
   const [isAudioZoneDragOver, setIsAudioZoneDragOver] = useState(false);
 
+  // loops exported to the compositions folder that are not in the library yet
+  const [inbox, setInbox] = useState({ enabled: false, items: [] });
+  const [inboxBusy, setInboxBusy] = useState({});
+  const [draggedLoop, setDraggedLoop] = useState(null);
+
   const coverInputRef = useRef(null);
   const audioInputRef = useRef(null);
+
+  const fetchInbox = useCallback(() => {
+    fetch('/api/manage/inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then((res) => res.json())
+      .then((data) => data && Array.isArray(data.items) && setInbox(data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchInbox();
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchInbox();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [fetchInbox]);
 
   const fetchCatalogue = useCallback(() => {
     fetch('/tracks.json')
@@ -59,7 +85,7 @@ export default function StudioManager() {
 
   const notify = (msg, type = 'success') => {
     setNotification({ msg, type });
-    setTimeout(() => setNotification(null), 3500);
+    setTimeout(() => setNotification(null), type === 'error' ? Math.max(6000, msg.length * 60) : 3500);
   };
 
   const currentPack = (catalogue.packs || []).find((p) => p.id === selectedPackId) || null;
@@ -499,6 +525,69 @@ export default function StudioManager() {
     }
   };
 
+  const inboxRequest = async (endpoint, item, payload, busyLabel) => {
+    setInboxBusy((prev) => ({ ...prev, [item.path]: busyLabel }));
+    try {
+      const res = await fetch(`/api/manage/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: item.path, ...payload }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      return data;
+    } finally {
+      setInboxBusy((prev) => {
+        const next = { ...prev };
+        delete next[item.path];
+        return next;
+      });
+      fetchInbox();
+    }
+  };
+
+  const handleAddLoopToPack = async (item, targetPack) => {
+    if (item.writing || inboxBusy[item.path]) return;
+    try {
+      await inboxRequest('inbox-add', item, { packId: targetPack.id }, 'adding');
+      notify(`Added "${item.title}" to ${targetPack.name}`);
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
+  const handleUpdateLoop = async (item) => {
+    const names = item.updates.map((t) => `"${t.title}" (${t.packName})`).join(', ');
+    if (!window.confirm(`Replace ${names} with this new export? The site will get the new version when you publish.`)) return;
+    try {
+      await inboxRequest('inbox-update', item, {}, 'updating');
+      notify(`Updated ${names}`);
+      fetchCatalogue();
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
+  const handleDismissLoop = async (item) => {
+    try {
+      await inboxRequest('inbox-dismiss', item, {}, 'dismissing');
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
+  const handleLoopDragStart = (e, item) => {
+    setDraggedLoop(item);
+    e.dataTransfer.setData('text/plain', item.path);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleLoopDragEnd = () => {
+    setDraggedLoop(null);
+    setDragOverPackId(null);
+  };
+
   const handlePublishToGit = async () => {
     if (isPublishing) return;
     setIsPublishing(true);
@@ -612,7 +701,25 @@ export default function StudioManager() {
           <div className="studio-sidebar-header">
             <span>PACKS ({(catalogue.packs || []).length})</span>
             {draggedTrack && <span className="studio-drop-tip">DROP SAMPLE TO MOVE</span>}
+            {draggedLoop && <span className="studio-drop-tip">DROP ON A PACK TO ADD</span>}
           </div>
+
+          {inbox.enabled && (
+            <div
+              className={`studio-pack-item studio-new-loops-item ${selectedPackId === NEW_LOOPS_ID ? 'active' : ''}`}
+              onClick={() => setSelectedPackId(NEW_LOOPS_ID)}
+              title="Loops you exported to your Compositions folder that are not in the library yet. Only you see this."
+            >
+              <div className="studio-pack-thumb studio-new-loops-icon">
+                <Inbox size={18} />
+              </div>
+              <div className="studio-pack-meta">
+                <span className="studio-pack-title">NEW LOOPS</span>
+                <span className="studio-pack-sub">{inbox.items.length} waiting • only you see this</span>
+              </div>
+              {inbox.items.length > 0 && <span className="studio-new-loops-count">{inbox.items.length}</span>}
+            </div>
+          )}
 
           <div className="studio-sidebar-packs">
             {(catalogue.packs || []).map((pack) => {
@@ -635,12 +742,16 @@ export default function StudioManager() {
                       handlePackReorderDragOver(e, pack.id);
                     } else if (draggedTrack) {
                       handlePackDragOver(e, pack.id);
+                    } else if (draggedLoop) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                      if (dragOverPackId !== pack.id) setDragOverPackId(pack.id);
                     }
                   }}
                   onDragLeave={(e) => {
                     if (draggedPack) {
                       handlePackReorderDragLeave(e, pack.id);
-                    } else if (draggedTrack) {
+                    } else if (draggedTrack || draggedLoop) {
                       handlePackDragLeave(e, pack.id);
                     }
                   }}
@@ -649,6 +760,11 @@ export default function StudioManager() {
                       handlePackReorderDrop(e, pack);
                     } else if (draggedTrack) {
                       handlePackDrop(e, pack);
+                    } else if (draggedLoop) {
+                      e.preventDefault();
+                      setDragOverPackId(null);
+                      handleAddLoopToPack(draggedLoop, pack);
+                      setDraggedLoop(null);
                     }
                   }}
                   title="Drag to rearrange pack order"
@@ -671,7 +787,113 @@ export default function StudioManager() {
 
         {/* main workspace detail panel */}
         <main className="studio-main-panel">
-          {currentPack ? (
+          {selectedPackId === NEW_LOOPS_ID ? (
+            <div className="studio-pack-view">
+              <div className="studio-new-loops-header">
+                <h1 className="studio-hero-title">NEW LOOPS</h1>
+                <p className="studio-hero-desc">
+                  Loops you exported to your Compositions folder that aren't in the library yet. Drag one onto a pack
+                  on the left to add it. Nothing here is on the website, and nothing is added until you drag it.
+                </p>
+              </div>
+
+              {inbox.items.length === 0 ? (
+                <div className="studio-empty-prompt">
+                  <Inbox size={32} />
+                  <p>No new loops. Export one to a month folder in Compositions and it will show up here.</p>
+                </div>
+              ) : (
+                <div className="studio-table">
+                  <div className="studio-table-row studio-table-head">
+                    <span className="st-col-play">#</span>
+                    <span className="st-col-title">LOOP</span>
+                    <span className="st-col-meta">BPM</span>
+                    <span className="st-col-meta">KEY</span>
+                    <span className="st-col-dur">SIZE</span>
+                    <span className="st-col-del" />
+                  </div>
+
+                  {inbox.items.map((item) => {
+                    const busy = inboxBusy[item.path];
+                    const isPlaying = playingTrackId === item.path;
+                    const blocked = item.writing || Boolean(busy);
+                    return (
+                      <div
+                        key={item.path}
+                        className={`studio-table-row ${blocked ? 'is-pending' : ''} ${isPlaying ? 'playing' : ''} ${draggedLoop?.path === item.path ? 'is-dragging' : ''}`}
+                        draggable={!blocked && !item.updates}
+                        onDragStart={(e) => handleLoopDragStart(e, item)}
+                        onDragEnd={handleLoopDragEnd}
+                        title={
+                          item.writing
+                            ? 'Still being exported...'
+                            : item.updates
+                            ? 'New export of a loop that is already in the library'
+                            : 'Drag onto a pack on the left to add it'
+                        }
+                      >
+                        <div className="st-col-play">
+                          {blocked ? (
+                            <Loader2 size={13} className="spin-icon pending-spinner" />
+                          ) : (
+                            <button
+                              className="st-btn-audition"
+                              onClick={() => handlePlayPreview({ id: item.path, previewUrl: inboxAudioUrl(item.path) })}
+                              title={isPlaying ? 'Pause' : 'Listen'}
+                            >
+                              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="st-col-title">
+                          <span className="st-track-title">{item.title}</span>
+                          <span className="st-track-id">
+                            {busy ? `${busy}...` : item.writing ? 'still exporting...' : `${item.folder} • ${item.name}`}
+                          </span>
+                          {item.updates && (
+                            <span className="studio-loop-note">
+                              New export of {item.updates.map((t) => `"${t.title}" (${t.packName})`).join(', ')}
+                            </span>
+                          )}
+                          {item.warnings.map((w) => (
+                            <span key={w} className="studio-loop-warning">
+                              <AlertCircle size={11} /> {w}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="st-col-meta">
+                          <span className="st-badge">{item.bpm || '-'}</span>
+                        </div>
+
+                        <div className="st-col-meta">
+                          <span className="st-badge">{item.key || '-'}</span>
+                        </div>
+
+                        <div className="st-col-dur">
+                          <span>{(item.size / 1048576).toFixed(0)} MB</span>
+                        </div>
+
+                        <div className="st-col-del studio-loop-actions">
+                          {item.updates && !blocked && (
+                            <button className="st-btn-update" onClick={() => handleUpdateLoop(item)} title="Replace the library version with this export">
+                              <RefreshCw size={13} />
+                            </button>
+                          )}
+                          {!blocked && (
+                            <button className="st-btn-trash" onClick={() => handleDismissLoop(item)} title="Hide this loop from the list">
+                              <X size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : currentPack ? (
             <div className="studio-pack-view">
               {/* pack detail header banner */}
               <div className="studio-pack-hero">

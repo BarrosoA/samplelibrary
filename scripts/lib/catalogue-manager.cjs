@@ -168,7 +168,7 @@ function parseAudioMetadataFromFilename(filename) {
 
   if (!title) title = nameWithoutExt;
 
-  return { title, bpm: bpm || 130, key: key || '-' };
+  return { title, bpm: bpm || 130, key: key || '-', hasBpm: Boolean(bpm), hasKey: Boolean(key) };
 }
 
 function probeDuration(filePath) {
@@ -197,7 +197,7 @@ function encodePreviewAudio(inputFilePath) {
   }
 }
 
-function buildTrack({ id, audioPath, originalName }) {
+function buildTrack({ id, audioPath, originalName, sourcePath }) {
   const meta = parseAudioMetadataFromFilename(originalName);
   return {
     id,
@@ -207,9 +207,121 @@ function buildTrack({ id, audioPath, originalName }) {
     instrument: 'Master Sample',
     duration: probeDuration(audioPath),
     previewUrl: encodePreviewAudio(audioPath),
-    master: media.addMaster(audioPath, originalName),
+    master: media.addMaster(audioPath, originalName, sourcePath),
     format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
   };
+}
+
+function resolveLoopFile(filePath) {
+  if (!media.isLoopPath(filePath) || !fs.existsSync(filePath)) {
+    throw new Error('That file is not a loop in your Compositions folder');
+  }
+  return path.resolve(filePath);
+}
+
+function listInbox() {
+  const { compositionsDir } = media.loadEnvConfig();
+  if (!compositionsDir) return { enabled: false, items: [] };
+
+  const state = media.readInboxState();
+  const data = loadCatalogue();
+  const tracksByKey = new Map();
+  (data.packs || []).forEach((p) =>
+    (p.tracks || []).forEach((t) => {
+      const key = media.masterKey(t.master);
+      if (!key) return;
+      if (!tracksByKey.has(key)) tracksByKey.set(key, []);
+      tracksByKey.get(key).push({ id: t.id, title: t.title, packId: p.id, packName: p.name, size: t.master.size });
+    })
+  );
+  const sourceByPath = new Map(
+    Object.entries(media.readSources()).map(([key, s]) => [path.resolve(s.path).toLowerCase(), { key, ...s }])
+  );
+  const librarySizes = new Set([...tracksByKey.values()].flat().map((t) => t.size));
+
+  const items = [];
+  for (const f of media.listLoopFiles()) {
+    if (f.arrivedMs <= state.baselineMs) continue;
+    if (state.dismissed[f.path] === f.mtimeMs) continue;
+    const src = sourceByPath.get(f.path.toLowerCase());
+    if (src && src.size === f.size && src.mtimeMs === f.mtimeMs && tracksByKey.has(src.key)) continue;
+
+    const name = path.basename(f.path);
+    const meta = parseAudioMetadataFromFilename(name);
+    // still being exported if it was touched in the last few seconds
+    const writing = Date.now() - f.arrivedMs < 8000;
+    const warnings = [];
+    if (!meta.hasBpm) warnings.push('No BPM in filename, it will be saved as 130');
+    if (!meta.hasKey) warnings.push('No key in filename');
+    const tag = path.basename(name, path.extname(name)).match(/@[\w.]+/);
+    if (tag && tag[0].toLowerCase() !== '@noluvmusic') warnings.push(`Tag is spelled "${tag[0]}"`);
+
+    const updates = src && tracksByKey.has(src.key) ? tracksByKey.get(src.key) : null;
+    if (!updates && !writing && librarySizes.has(f.size)) {
+      const same = tracksByKey.get(media.hashFile(f.path));
+      if (same) warnings.push(`Exact same file is already in the library as "${same[0].title}" (${same[0].packName})`);
+    }
+
+    items.push({
+      path: f.path,
+      name,
+      folder: path.relative(compositionsDir, path.dirname(f.path)),
+      size: f.size,
+      mtimeMs: f.arrivedMs,
+      title: meta.title,
+      bpm: meta.bpm,
+      key: meta.key,
+      warnings,
+      writing,
+      updates,
+    });
+  }
+  items.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return { enabled: true, items };
+}
+
+function addTrackFromFile(packId, filePath) {
+  const source = resolveLoopFile(filePath);
+  const data = loadCatalogue();
+  const pack = (data.packs || []).find((p) => p.id === packId);
+  if (!pack) throw new Error(`pack ${packId} not found`);
+  if (!pack.tracks) pack.tracks = [];
+
+  const track = buildTrack({
+    id: `${pack.id.replace(/^pack-/, '')}-${pack.tracks.length + 1}-${Date.now().toString().slice(-3)}`,
+    audioPath: source,
+    originalName: path.basename(source),
+    sourcePath: source,
+  });
+  pack.tracks.push(track);
+  saveCatalogue(data);
+  return { success: true, track, pack };
+}
+
+// swaps in a re-exported version of a loop that is already in the library, keeping its place and id
+function updateTrackFromFile(filePath) {
+  const source = resolveLoopFile(filePath);
+  const entry = Object.entries(media.readSources()).find(([, s]) => path.resolve(s.path).toLowerCase() === source.toLowerCase());
+  if (!entry) throw new Error('No library sample uses this file');
+  const oldKey = entry[0];
+
+  const data = loadCatalogue();
+  const targets = (data.packs || []).flatMap((p) => (p.tracks || []).filter((t) => media.masterKey(t.master) === oldKey));
+  if (targets.length === 0) throw new Error('No library sample uses this file');
+
+  const previewUrl = encodePreviewAudio(source);
+  const master = media.addMaster(source, path.basename(source), source);
+  const duration = probeDuration(source);
+  const before = targets.map((t) => ({ ...t }));
+  targets.forEach((t) => Object.assign(t, { previewUrl, master, duration }));
+  saveCatalogue(data);
+  media.retireTracks(before, data);
+  return { success: true, updated: targets.map((t) => t.title) };
+}
+
+function dismissInbox(filePath) {
+  media.dismissInboxFile(resolveLoopFile(filePath));
+  return { success: true };
 }
 
 async function importPackFromStaging({ folderPath, packName, description }) {
@@ -254,6 +366,7 @@ async function importPackFromStaging({ folderPath, packName, description }) {
       id: `${slug}-${index + 1}`,
       audioPath: path.join(folderPath, file),
       originalName: file,
+      sourcePath: path.join(folderPath, file),
     })
   );
 
@@ -374,7 +487,7 @@ function publishToGit() {
     const projectRoot = path.resolve(__dirname, '../..');
 
     // media must be live before the catalogue that points at it
-    const mediaResult = media.deploy();
+    const mediaResult = media.deploy({ catalogue: loadCatalogue() });
 
     const statusBefore = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf8' }).trim();
     if (!statusBefore) {
@@ -415,6 +528,11 @@ module.exports = {
   updatePackCover,
   addTracksToPack,
   importPackFromStaging,
+  listInbox,
+  addTrackFromFile,
+  updateTrackFromFile,
+  dismissInbox,
+  resolveLoopFile,
   parseAudioMetadataFromFilename,
   probeDuration,
   encodePreviewAudio,

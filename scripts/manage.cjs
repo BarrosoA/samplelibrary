@@ -134,7 +134,7 @@ async function handleInteractive() {
       manager.saveCatalogue(data);
       console.log('Catalogue sample counts synchronized.');
     } else if (choice === '6') {
-      console.log(require('./lib/media-store.cjs').deploy().message);
+      console.log(require('./lib/media-store.cjs').deploy({ catalogue: data }).message);
     } else {
       console.log('Exiting.');
     }

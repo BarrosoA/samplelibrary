@@ -88,15 +88,23 @@ function rebase() {
   console.log(`Pointed ${changed} track(s) at ${baseUrl}`);
 }
 
+function adopt() {
+  const { adopted, kept } = media.adoptKeptMasters(manager.loadCatalogue());
+  adopted.forEach((a) => console.log(`  now uses original: ${a}`));
+  kept.forEach((k) => console.log(`  keeping stored copy (original not found in Compositions): ${k}`));
+  console.log(`\n${adopted.length} stored copies removed, ${kept.length} kept.`);
+}
+
 const commands = {
   migrate,
   rebase,
-  deploy: () => console.log(media.deploy({ force: process.argv.includes('--force') }).message),
+  adopt,
+  deploy: () => console.log(media.deploy({ catalogue: manager.loadCatalogue(), force: process.argv.includes('--force') }).message),
 };
 
 const cmd = commands[process.argv[2]];
 if (!cmd) {
-  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase> [--force]');
+  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase|adopt> [--force]');
   process.exit(1);
 }
 Promise.resolve()
