@@ -151,30 +151,32 @@ export default function Library() {
 
   return (
     <div className="app-wrapper">
-      <header className="top-nav">
-        <div
-          className="brand-title"
-          onClick={handleBackToPacks}
-          style={{ cursor: 'pointer' }}
-          title="Return to library overview"
-        >
-          <span>NO LUV LIBRARY</span>
-        </div>
+      {!selectedPack && (
+        <header className="top-nav">
+          <div
+            className="brand-title"
+            onClick={handleBackToPacks}
+            style={{ cursor: 'pointer' }}
+            title="Return to library overview"
+          >
+            <span>NO LUV LIBRARY</span>
+          </div>
 
-        <div className="search-mini">
-          <Search size={14} className="search-mini-icon" />
-          <input
-            type="text"
-            className="search-mini-input"
-            placeholder="Search packs & sounds..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              if (selectedPack) setSelectedPack(null);
-            }}
-          />
-        </div>
-      </header>
+          <div className="search-mini">
+            <Search size={14} className="search-mini-icon" />
+            <input
+              type="text"
+              className="search-mini-input"
+              placeholder="Search packs & sounds..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (selectedPack) setSelectedPack(null);
+              }}
+            />
+          </div>
+        </header>
+      )}
 
       {selectedPack ? (
         /* album / pack page view */
