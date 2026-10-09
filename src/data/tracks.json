@@ -4,7 +4,7 @@
       "id": "pack-untitled-pack-0558",
       "name": "Fado Rosa",
       "cover": "/images/custom-pack-untitled-pack-0558-1791529546095.jpg",
-      "trackCount": 1,
+      "trackCount": 2,
       "description": "Guitar samples inspired in the emotion of fado.",
       "format": "WAV",
       "license": "Royalty-Free",
@@ -28,6 +28,24 @@
               "https://musicportfolio-3na.pages.dev/m/d79ab5cc1bf8ac027382ff48.3"
             ]
           }
+        },
+        {
+          "id": "untitled-pack-0558-2-699",
+          "title": "sem ti VERSAO2",
+          "bpm": 80,
+          "key": "-",
+          "instrument": "Master Sample",
+          "duration": 126,
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/fee3e448939b6a234a4bac5d.opus",
+          "master": {
+            "filename": "sem ti VERSAO2 80BPM.wav",
+            "size": 33339784,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/33ba60ff967adb122824246a.0",
+              "https://musicportfolio-3na.pages.dev/m/33ba60ff967adb122824246a.1"
+            ]
+          },
+          "format": "WAV"
         }
       ]
     },
