@@ -137,12 +137,13 @@ export default function StudioManager() {
         ext.endsWith('.mp3') ||
         ext.endsWith('.flac') ||
         ext.endsWith('.aiff') ||
-        ext.endsWith('.m4a')
+        ext.endsWith('.m4a') ||
+        ext.endsWith('.opus')
       );
     });
 
     if (files.length === 0) {
-      notify('No valid audio files found (WAV, MP3, FLAC)', 'error');
+      notify('No valid audio files found (WAV, MP3, FLAC, OPUS)', 'error');
       return;
     }
 
@@ -466,7 +467,7 @@ export default function StudioManager() {
         ref={audioInputRef}
         style={{ display: 'none' }}
         multiple
-        accept="audio/*,.wav,.mp3,.flac,.aiff,.m4a"
+        accept="audio/*,.wav,.mp3,.flac,.aiff,.m4a,.opus"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
             uploadAudioFiles(e.target.files);
@@ -688,7 +689,7 @@ export default function StudioManager() {
                   >
                     <UploadCloud size={24} />
                     <p className="dropzone-primary-text">Drag & drop audio files here</p>
-                    <p className="dropzone-sub-text">or click to browse (.wav, .mp3, .flac)</p>
+                    <p className="dropzone-sub-text">or click to browse (.wav, .mp3, .flac, .opus)</p>
                   </div>
                 ) : (
                   <div className="studio-table">

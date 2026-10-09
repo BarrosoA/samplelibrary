@@ -186,10 +186,10 @@ function probeDuration(filePath) {
   }
 }
 
-function encodePreviewMp3(inputFilePath, outputFilename) {
+function encodePreviewAudio(inputFilePath, outputFilename) {
   const outPath = path.join(AUDIO_DIR, outputFilename);
   execSync(
-    `ffmpeg -y -i "${inputFilePath}" -c:a libmp3lame -b:a 128k "${outPath}"`,
+    `ffmpeg -y -i "${inputFilePath}" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
     { stdio: 'pipe' }
   );
   return `/audio/${outputFilename}`;
@@ -223,7 +223,7 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
   }
 
   // find audio files
-  const audioExtensions = ['.wav', '.mp3', '.flac', '.aiff', '.m4a'];
+  const audioExtensions = ['.wav', '.mp3', '.flac', '.aiff', '.m4a', '.opus'];
   const audioFiles = files
     .filter((f) => audioExtensions.includes(path.extname(f).toLowerCase()))
     .sort();
@@ -238,8 +238,8 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
     const meta = parseAudioMetadataFromFilename(file);
     const duration = probeDuration(fullAudioPath);
     const trackSlug = `${slug}-${index + 1}`;
-    const previewFilename = `${trackSlug}.mp3`;
-    const previewUrl = encodePreviewMp3(fullAudioPath, previewFilename);
+    const previewFilename = `${trackSlug}.opus`;
+    const previewUrl = encodePreviewAudio(fullAudioPath, previewFilename);
 
     tracks.push({
       id: trackSlug,
@@ -360,8 +360,8 @@ function addTracksToPack(packId, files) {
 
     const trackIndex = pack.tracks.length + 1;
     const trackSlug = `${pack.id.replace(/^pack-/, '')}-${trackIndex}-${Date.now().toString().slice(-3)}`;
-    const previewFilename = `${trackSlug}.mp3`;
-    const previewUrl = encodePreviewMp3(tempPath, previewFilename);
+    const previewFilename = `${trackSlug}.opus`;
+    const previewUrl = encodePreviewAudio(tempPath, previewFilename);
 
     const newTrack = {
       id: trackSlug,
@@ -397,7 +397,7 @@ module.exports = {
   importPackFromStaging,
   parseAudioMetadataFromFilename,
   probeDuration,
-  encodePreviewMp3,
+  encodePreviewAudio,
 };
 
 
