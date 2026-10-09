@@ -1025,6 +1025,33 @@ a {
   opacity: 0.9;
 }
 
+.studio-btn-publish {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  color: #000000;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.studio-btn-publish:hover:not(:disabled) {
+  background: #e4e4e4;
+  border-color: #e4e4e4;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.16);
+}
+
+.studio-btn-publish:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .studio-btn-preview-site {
   display: inline-flex;
   align-items: center;

@@ -4,9 +4,19 @@ dist-ssr
 *.local
 .DS_Store
 
-# security: prevent google drive api credentials from ever being committed
+# ignore all credentials, tokens, and env files
+*.json.token
+*token*.json
+*oauth*.json
+*credentials*.json
+*service-account*.json
+*client_secret*.json
+*.key
+*.pem
+.credentials/
 gdrive-credentials*.json
 service-account*.json
 .env
 .env.*
+.env.local
 

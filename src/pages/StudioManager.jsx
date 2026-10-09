@@ -27,6 +27,7 @@ export default function StudioManager() {
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [pendingTracks, setPendingTracks] = useState([]);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // drag state
   const [draggedTrack, setDraggedTrack] = useState(null);
@@ -498,6 +499,25 @@ export default function StudioManager() {
     }
   };
 
+  const handlePublishToGit = async () => {
+    if (isPublishing) return;
+    setIsPublishing(true);
+    try {
+      const res = await fetch('/api/manage/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to publish');
+      notify(data.message || 'Pushed to GitHub successfully!');
+    } catch (err) {
+      notify(err.message, 'error');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div className="studio-app-wrapper">
       {/* top studio header */}
@@ -511,6 +531,16 @@ export default function StudioManager() {
         </div>
 
         <div className="studio-topbar-right">
+          <button 
+            className="studio-btn-publish"
+            onClick={handlePublishToGit}
+            disabled={isPublishing}
+            title="Commit and push all changes to GitHub for live Vercel deployment"
+          >
+            {isPublishing ? <Loader2 size={14} className="spin-icon" /> : <UploadCloud size={14} />}
+            <span>{isPublishing ? 'PUBLISHING...' : 'PUBLISH TO LIVE'}</span>
+          </button>
+
           <button 
             className="studio-btn-import"
             onClick={handleCreateNewPack}

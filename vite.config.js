@@ -99,6 +99,10 @@ function catalogueDevPlugin() {
               const result = manager.importPackFromStaging(payload);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
+            } else if (url === '/publish') {
+              const result = manager.publishToGit();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
             } else {
               res.statusCode = 404;
               res.setHeader('Content-Type', 'application/json');

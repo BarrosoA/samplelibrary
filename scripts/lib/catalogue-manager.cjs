@@ -420,6 +420,34 @@ async function addTracksToPack(packId, files) {
   return { success: true, tracks: addedTracks, pack };
 }
 
+function publishToGit() {
+  try {
+    const projectRoot = path.resolve(__dirname, '../..');
+    const statusBefore = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf8' }).trim();
+    if (!statusBefore) {
+      return { success: true, message: 'Everything is already up to date on Git. No pending changes to publish.' };
+    }
+
+    execSync('git add -A', { cwd: projectRoot });
+    const statusStaged = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf8' }).trim();
+    if (!statusStaged) {
+      return { success: true, message: 'No file changes detected to commit.' };
+    }
+
+    const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    execSync(`git commit -m "update catalogue [studio manager] ${timestamp}"`, { cwd: projectRoot });
+    execSync('git push origin main', { cwd: projectRoot });
+
+    return {
+      success: true,
+      message: 'Successfully published to GitHub. Vercel will deploy your live updates in ~60 seconds.',
+    };
+  } catch (err) {
+    console.error('[Git Publish Error]:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 module.exports = {
   loadCatalogue,
   saveCatalogue,
@@ -436,6 +464,7 @@ module.exports = {
   parseAudioMetadataFromFilename,
   probeDuration,
   encodePreviewAudio,
+  publishToGit,
 };
 
 
