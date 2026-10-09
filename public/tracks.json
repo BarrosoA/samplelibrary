@@ -6,7 +6,7 @@
       "cover": "/images/custom-pack-untitled-pack-0558-1791529546095.jpg",
       "trackCount": 1,
       "description": "Guitar samples inspired in the emotion of fado.",
-      "downloadUrl": "https://drive.google.com/drive/folders/19Kg6d-u0EoXuAmGQvHbcagLSEHoJl1hg",
+      "downloadUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/tree/main/masters/untitled-pack-0558",
       "format": "WAV",
       "license": "Royalty-Free",
       "tracks": [
@@ -17,7 +17,7 @@
           "key": "Cm",
           "instrument": "Master Sample",
           "duration": 377.7,
-          "previewUrl": "/audio/untitled-pack-0558-1-310.opus",
+          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/untitled-pack-0558-1-310.opus",
           "downloadUrl": "https://drive.google.com/uc?export=download&id=1fpPG0XHA6hH7RAy45sA-mqn3q6f8hz31",
           "format": "WAV"
         }
@@ -29,7 +29,7 @@
       "cover": "/images/pack-cover.jpg",
       "trackCount": 2,
       "description": "",
-      "downloadUrl": "",
+      "downloadUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/tree/main/masters/unreleased-01",
       "format": "WAV",
       "license": "Royalty-Free",
       "tracks": [
@@ -40,7 +40,7 @@
           "key": "Bbm",
           "instrument": "Master Sample",
           "duration": 241.78,
-          "previewUrl": "/audio/words-135-bbm.opus",
+          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/words-135-bbm.opus",
           "downloadUrl": "https://drive.google.com/uc?export=download&id=1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u",
           "format": "WAV"
         },
@@ -51,7 +51,7 @@
           "key": "C#m",
           "instrument": "Master Sample",
           "duration": 111.47,
-          "previewUrl": "/audio/galeria-105-csharp-min.opus",
+          "previewUrl": "https://huggingface.co/datasets/AnalogTensor/samplelibrary-audio/resolve/main/audio/galeria-105-csharp-min.opus",
           "downloadUrl": "https://drive.google.com/uc?export=download&id=1KxhlELkrHAZ3do0Rv8y9nZqgERVZrKZq",
           "format": "WAV"
         }

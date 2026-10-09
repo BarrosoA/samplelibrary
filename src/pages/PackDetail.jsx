@@ -222,7 +222,7 @@ export default function PackDetail({
                         ? 'Download starting...'
                         : downloadStates[track.id] === 'done'
                         ? 'Download started'
-                        : `Download lossless ${track.format || 'WAV'} from Google Drive`
+                        : `Download lossless ${track.format || 'WAV'}`
                     }
                     disabled={Boolean(downloadStates[track.id])}
                   >

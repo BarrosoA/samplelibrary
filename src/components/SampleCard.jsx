@@ -52,7 +52,7 @@ export default function SampleCard({ track, isActive, isPlaying, onPlayPause }) 
           target="_blank"
           rel="noopener noreferrer"
           className="download-link"
-          title={`Download lossless ${track.format || 'file'} from Google Drive`}
+          title={`Download lossless ${track.format || 'file'}`}
         >
           <Download size={14} />
           <span>Lossless</span>

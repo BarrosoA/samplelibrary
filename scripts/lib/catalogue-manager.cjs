@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const hf = require('./hf-uploader.cjs');
 const gdrive = require('./gdrive-uploader.cjs');
 
 const PUBLIC_TRACKS_PATH = path.resolve(__dirname, '../../public/tracks.json');
@@ -217,7 +218,7 @@ function encodePreviewAudio(inputFilePath, outputFilename) {
   return `/audio/${outputFilename}`;
 }
 
-function importPackFromStaging({ folderPath, packName, description, downloadUrl }) {
+async function importPackFromStaging({ folderPath, packName, description, downloadUrl }) {
   if (!fs.existsSync(folderPath)) {
     throw new Error(`staging folder ${folderPath} does not exist`);
   }
@@ -254,14 +255,35 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
     throw new Error(`no audio files found in ${folderPath}`);
   }
 
+  let finalPackDownloadUrl = downloadUrl || '';
   const tracks = [];
-  audioFiles.forEach((file, index) => {
+  for (let index = 0; index < audioFiles.length; index++) {
+    const file = audioFiles[index];
     const fullAudioPath = path.join(folderPath, file);
     const meta = parseAudioMetadataFromFilename(file);
     const duration = probeDuration(fullAudioPath);
     const trackSlug = `${slug}-${index + 1}`;
     const previewFilename = `${trackSlug}.opus`;
-    const previewUrl = encodePreviewAudio(fullAudioPath, previewFilename);
+    let previewUrl = encodePreviewAudio(fullAudioPath, previewFilename);
+    let trackDownloadUrl = finalPackDownloadUrl;
+
+    if (hf.isConfigured()) {
+      try {
+        const previewFilePath = path.join(AUDIO_DIR, previewFilename);
+        const hfRes = await hf.uploadTrackAssets({
+          packSlug: slug,
+          originalFilePath: fullAudioPath,
+          originalFileName: file,
+          previewFilePath,
+          previewFileName: previewFilename,
+        });
+        if (hfRes.previewUrl) previewUrl = hfRes.previewUrl;
+        if (hfRes.downloadUrl) trackDownloadUrl = hfRes.downloadUrl;
+        if (!finalPackDownloadUrl && hfRes.packUrl) finalPackDownloadUrl = hfRes.packUrl;
+      } catch (hfErr) {
+        console.warn(`[HF] Staging upload failed for ${file}:`, hfErr.message);
+      }
+    }
 
     tracks.push({
       id: trackSlug,
@@ -271,10 +293,10 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
       instrument: 'Master Sample',
       duration,
       previewUrl,
-      downloadUrl: downloadUrl || '',
+      downloadUrl: trackDownloadUrl,
       format: path.extname(file).replace('.', '').toUpperCase(),
     });
-  });
+  }
 
   const newPack = {
     id: `pack-${slug}`,
@@ -282,7 +304,7 @@ function importPackFromStaging({ folderPath, packName, description, downloadUrl 
     cover: coverPath,
     trackCount: tracks.length,
     description: description ? description.trim() : '',
-    downloadUrl: downloadUrl || '',
+    downloadUrl: finalPackDownloadUrl,
     format: 'WAV',
     license: 'Royalty-Free',
     tracks,
@@ -383,21 +405,42 @@ async function addTracksToPack(packId, files) {
     const trackIndex = pack.tracks.length + 1;
     const trackSlug = `${pack.id.replace(/^pack-/, '')}-${trackIndex}-${Date.now().toString().slice(-3)}`;
     const previewFilename = `${trackSlug}.opus`;
-    const previewUrl = encodePreviewAudio(tempPath, previewFilename);
+    let previewUrl = encodePreviewAudio(tempPath, previewFilename);
 
     let individualDownloadUrl = pack.downloadUrl || '';
 
-    // upload full master to Google Drive if credentials available
-    try {
-      const driveUpload = await gdrive.uploadFileToDrive(pack.name, tempPath, originalName);
-      if (driveUpload.success) {
-        individualDownloadUrl = driveUpload.downloadUrl;
-        if (!pack.downloadUrl) {
-          pack.downloadUrl = driveUpload.folderUrl;
+    // upload preview and master to Hugging Face if configured
+    if (hf.isConfigured()) {
+      try {
+        const previewFilePath = path.join(AUDIO_DIR, previewFilename);
+        const hfRes = await hf.uploadTrackAssets({
+          packSlug: pack.id.replace(/^pack-/, ''),
+          originalFilePath: tempPath,
+          originalFileName: originalName,
+          previewFilePath,
+          previewFileName: previewFilename,
+        });
+        if (hfRes.previewUrl) previewUrl = hfRes.previewUrl;
+        if (hfRes.downloadUrl) individualDownloadUrl = hfRes.downloadUrl;
+        if (!pack.downloadUrl && hfRes.packUrl) {
+          pack.downloadUrl = hfRes.packUrl;
         }
+      } catch (hfErr) {
+        console.warn(`[HF] Could not upload ${originalName}:`, hfErr.message);
       }
-    } catch (gErr) {
-      console.warn(`[GDrive] Could not upload ${originalName}:`, gErr.message);
+    } else {
+      // fallback to Google Drive if credentials available
+      try {
+        const driveUpload = await gdrive.uploadFileToDrive(pack.name, tempPath, originalName);
+        if (driveUpload.success) {
+          individualDownloadUrl = driveUpload.downloadUrl;
+          if (!pack.downloadUrl) {
+            pack.downloadUrl = driveUpload.folderUrl;
+          }
+        }
+      } catch (gErr) {
+        console.warn(`[GDrive] Could not upload ${originalName}:`, gErr.message);
+      }
     }
 
     const newTrack = {
@@ -436,7 +479,8 @@ function publishToGit() {
 
     const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
     execSync(`git commit -m "update catalogue [studio manager] ${timestamp}"`, { cwd: projectRoot });
-    execSync('git push origin main', { cwd: projectRoot });
+    const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: projectRoot, encoding: 'utf8' }).trim() || 'main';
+    execSync(`git push origin ${currentBranch}`, { cwd: projectRoot });
 
     return {
       success: true,

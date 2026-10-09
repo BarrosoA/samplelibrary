@@ -785,10 +785,10 @@ export default function StudioManager() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="studio-btn-subtle"
-                        title="Open Google Drive folder/ZIP"
+                        title="Open storage folder/repository"
                       >
                         <HardDriveUpload size={14} />
-                        <span>DRIVE LINK</span>
+                        <span>STORAGE LINK</span>
                       </a>
                     )}
                     <button
@@ -871,7 +871,7 @@ export default function StudioManager() {
                           onDragOver={(e) => !isPending && handleTrackDragOver(e, track.id)}
                           onDragLeave={(e) => !isPending && handleTrackDragLeave(e, track.id)}
                           onDrop={(e) => !isPending && handleTrackDrop(e, track)}
-                          title={isPending ? 'Processing audio and uploading to Google Drive...' : 'Drag to reorder or drag onto a sidebar pack'}
+                          title={isPending ? 'Processing audio and uploading to storage...' : 'Drag to reorder or drag onto a sidebar pack'}
                         >
                           <div className="st-col-play">
                             {isPending ? (

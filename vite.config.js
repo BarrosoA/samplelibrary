@@ -63,7 +63,7 @@ function catalogueDevPlugin() {
         req.on('data', (chunk) => {
           body += chunk;
         });
-        req.on('end', () => {
+        req.on('end', async () => {
           try {
             const payload = JSON.parse(body || '{}');
 
@@ -96,7 +96,7 @@ function catalogueDevPlugin() {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
             } else if (url === '/import-staging') {
-              const result = manager.importPackFromStaging(payload);
+              const result = await manager.importPackFromStaging(payload);
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
             } else if (url === '/publish') {
@@ -120,5 +120,8 @@ function catalogueDevPlugin() {
 }
 
 export default defineConfig({
+  resolve: {
+    preserveSymlinks: true,
+  },
   plugins: [react(), catalogueDevPlugin()],
 });

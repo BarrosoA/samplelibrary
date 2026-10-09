@@ -21,9 +21,11 @@ async function handleInteractive() {
   console.log('3. Move sample to another pack');
   console.log('4. Delete an entire pack');
   console.log('5. Sync sample counts');
-  console.log('6. Exit');
+  console.log('6. Migrate existing audio to Hugging Face');
+  console.log('7. Test Hugging Face connection');
+  console.log('8. Exit');
 
-  const choice = await ask(rl, '\nSelect an option [1-6]: ');
+  const choice = await ask(rl, '\nSelect an option [1-8]: ');
 
   try {
     const data = manager.loadCatalogue();
@@ -38,10 +40,10 @@ async function handleInteractive() {
       }
       const packName = await ask(rl, 'Pack name (e.g. DARK VOID): ');
       const description = await ask(rl, 'Description (optional): ');
-      const downloadUrl = await ask(rl, 'Google Drive download URL (optional): ');
+      const downloadUrl = await ask(rl, 'Storage / Download URL (optional, blank for auto-HF): ');
 
       console.log('\nProcessing audio files and generating previews...');
-      const res = manager.importPackFromStaging({
+      const res = await manager.importPackFromStaging({
         folderPath,
         packName: packName || 'NEW PACK',
         description,
@@ -134,6 +136,11 @@ async function handleInteractive() {
     } else if (choice === '5') {
       manager.saveCatalogue(data);
       console.log('Catalogue sample counts synchronized.');
+    } else if (choice === '6') {
+      const migrate = require('./migrate-to-hf.cjs');
+      await migrate.migrateCatalogue();
+    } else if (choice === '7') {
+      require('./test-hf.cjs');
     } else {
       console.log('Exiting.');
     }
@@ -150,27 +157,28 @@ if (args.length === 0) {
   handleInteractive();
 } else {
   const cmd = args[0];
-  try {
-    if (cmd === '--delete-track') {
-      const [_, packId, trackId] = args;
-      manager.deleteTrack(packId, trackId);
-      console.log(`Deleted track ${trackId} from ${packId}.`);
-    } else if (cmd === '--move-track') {
-      const [_, sourcePackId, targetPackId, trackId] = args;
-      manager.moveTrack(sourcePackId, targetPackId, trackId);
-      console.log(`Moved track ${trackId} from ${sourcePackId} to ${targetPackId}.`);
-    } else if (cmd === '--delete-pack') {
-      const [_, packId] = args;
-      manager.deletePack(packId);
-      console.log(`Deleted pack ${packId}.`);
-    } else if (cmd === '--import') {
-      const [_, folderPath, packName, driveUrl] = args;
-      const res = manager.importPackFromStaging({
-        folderPath,
-        packName: packName || 'NEW PACK',
-        downloadUrl: driveUrl || '',
-      });
-      console.log(`Imported ${res.pack.name} with ${res.pack.tracks.length} tracks.`);
+  (async () => {
+    try {
+      if (cmd === '--delete-track') {
+        const [_, packId, trackId] = args;
+        manager.deleteTrack(packId, trackId);
+        console.log(`Deleted track ${trackId} from ${packId}.`);
+      } else if (cmd === '--move-track') {
+        const [_, sourcePackId, targetPackId, trackId] = args;
+        manager.moveTrack(sourcePackId, targetPackId, trackId);
+        console.log(`Moved track ${trackId} from ${sourcePackId} to ${targetPackId}.`);
+      } else if (cmd === '--delete-pack') {
+        const [_, packId] = args;
+        manager.deletePack(packId);
+        console.log(`Deleted pack ${packId}.`);
+      } else if (cmd === '--import') {
+        const [_, folderPath, packName, driveUrl] = args;
+        const res = await manager.importPackFromStaging({
+          folderPath,
+          packName: packName || 'NEW PACK',
+          downloadUrl: driveUrl || '',
+        });
+        console.log(`Imported ${res.pack.name} with ${res.pack.tracks.length} tracks.`);
     } else {
       console.log('Unknown command. Use npm run manage for interactive mode.');
     }
@@ -178,5 +186,6 @@ if (args.length === 0) {
     console.error('Error:', err.message);
     process.exit(1);
   }
+  })();
 }
 

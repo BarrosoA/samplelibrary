@@ -7,9 +7,12 @@
     "dev": "vite",
     "build": "vite build && node scripts/generate-seo.cjs",
     "preview": "vite preview",
-    "manage": "node scripts/manage.cjs"
+    "manage": "node scripts/manage.cjs",
+    "hf:test": "node scripts/test-hf.cjs",
+    "hf:migrate": "node scripts/migrate-to-hf.cjs"
   },
   "dependencies": {
+    "@huggingface/hub": "^2.17.6",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

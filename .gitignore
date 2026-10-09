@@ -20,3 +20,6 @@ service-account*.json
 .env.*
 .env.local
 
+# audio previews hosted on hugging face
+public/audio/*.opus
+!public/audio/.gitkeep

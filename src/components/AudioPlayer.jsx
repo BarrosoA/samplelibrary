@@ -210,7 +210,7 @@ export default function AudioPlayer({
                 ? 'Download starting...'
                 : downloadState === 'done'
                 ? 'Download started'
-                : `Download lossless ${currentTrack.format || 'file'} from Google Drive`
+                : `Download lossless ${currentTrack.format || 'file'}`
             }
             disabled={downloadState !== 'idle'}
           >

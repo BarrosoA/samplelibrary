@@ -105,11 +105,11 @@ export default function AddPackModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           <div className="modal-field">
-            <label className="modal-label">GOOGLE DRIVE DOWNLOAD URL (OPTIONAL)</label>
+            <label className="modal-label">STORAGE / DOWNLOAD URL (OPTIONAL)</label>
             <input
               type="url"
               className="modal-input"
-              placeholder="https://drive.google.com/..."
+              placeholder="https://huggingface.co/... or leave blank for auto-upload"
               value={downloadUrl}
               onChange={(e) => setDownloadUrl(e.target.value)}
               disabled={loading}
