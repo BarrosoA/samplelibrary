@@ -86,14 +86,32 @@ export default function AudioPlayer({
     setDuration(audioRef.current.duration || currentTrack?.duration || 0);
   };
 
-  const handleSeek = (e) => {
-    if (!audioRef.current || !progressBarRef.current) return;
+  const [scrubTime, setScrubTime] = useState(null);
+
+  const timeAtPointer = (e) => {
     const rect = progressBarRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percent = Math.max(0, Math.min(1, clickX / rect.width));
-    const newTime = percent * (duration || currentTrack?.duration || 1);
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    return percent * (duration || currentTrack?.duration || 1);
+  };
+
+  // while dragging only the bar moves; the audio jumps once on release
+  const handleScrubStart = (e) => {
+    if (!audioRef.current || !progressBarRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setScrubTime(timeAtPointer(e));
+  };
+
+  const handleScrubMove = (e) => {
+    if (scrubTime === null) return;
+    setScrubTime(timeAtPointer(e));
+  };
+
+  const handleScrubEnd = (e) => {
+    if (scrubTime === null) return;
+    const newTime = timeAtPointer(e);
     audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
+    setScrubTime(null);
   };
 
   const handleEnded = () => {
@@ -112,7 +130,8 @@ export default function AudioPlayer({
   if (!currentTrack) return null;
 
   const totalDuration = duration || currentTrack.duration || 0;
-  const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
+  const shownTime = scrubTime ?? currentTime;
+  const progressPercent = totalDuration > 0 ? Math.min(100, (shownTime / totalDuration) * 100) : 0;
 
   return (
     <footer className="audio-player-bar">
@@ -170,13 +189,22 @@ export default function AudioPlayer({
           </div>
 
           <div className="timeline-container">
-            <span className="time-label">{formatTime(currentTime)}</span>
+            <span className="time-label">{formatTime(shownTime)}</span>
             <div
-              className="progress-bar-wrap"
+              className={`progress-bar-wrap ${scrubTime !== null ? 'is-scrubbing' : ''}`}
               ref={progressBarRef}
-              onClick={handleSeek}
+              onPointerDown={handleScrubStart}
+              onPointerMove={handleScrubMove}
+              onPointerUp={handleScrubEnd}
+              onPointerCancel={() => setScrubTime(null)}
+              role="slider"
+              aria-label="Seek"
+              aria-valuemin={0}
+              aria-valuemax={Math.round(totalDuration)}
+              aria-valuenow={Math.round(shownTime)}
             >
               <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+              <div className="progress-thumb" style={{ left: `${progressPercent}%` }} />
             </div>
             <span className="time-label right">{formatTime(totalDuration)}</span>
           </div>

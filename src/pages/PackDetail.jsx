@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Play, Pause, Download, FolderArchive, Loader2, Check } from 'lucide-react';
 import { canDownloadTrack, downloadPack, downloadTrack } from '../utils/download';
+import { getCoverColor } from '../utils/coverColor';
+import FadeImage from '../components/FadeImage';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -16,6 +18,18 @@ export default function PackDetail({
   const tracks = pack.tracks || [];
   const [downloadStates, setDownloadStates] = useState({});
   const [downloadAllState, setDownloadAllState] = useState('idle');
+  const [glowColor, setGlowColor] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setGlowColor(null);
+    getCoverColor(pack.cover).then((color) => {
+      if (!cancelled) setGlowColor(color);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pack.cover]);
 
   const clearTrackState = (trackId) =>
     setDownloadStates((prev) => {
@@ -74,6 +88,12 @@ export default function PackDetail({
 
   return (
     <div className="pack-detail-page">
+      <div
+        className={`pack-glow ${glowColor ? 'is-visible' : ''}`}
+        style={glowColor ? { '--glow-rgb': glowColor.join(', ') } : undefined}
+        aria-hidden="true"
+      />
+
       {/* back navigation */}
       <nav className="detail-nav">
         <button className="back-btn" onClick={onBack} title="Back to all packs">
@@ -85,7 +105,7 @@ export default function PackDetail({
       {/* album hero banner */}
       <section className="album-hero">
         <div className="album-hero-cover-wrap">
-          <img src={pack.cover} alt={pack.name} className="album-hero-cover" />
+          <FadeImage src={pack.cover} alt={pack.name} className="album-hero-cover" />
         </div>
 
         <div className="album-hero-content">
@@ -159,7 +179,7 @@ export default function PackDetail({
               >
                 <div className="col-idx">
                   <button
-                    className="row-play-btn"
+                    className={`row-play-btn ${isThisTrackPlaying ? 'is-playing' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onPlayTrack(track, pack);
@@ -167,7 +187,14 @@ export default function PackDetail({
                     title={isThisTrackPlaying ? 'Pause' : 'Play'}
                   >
                     {isThisTrackPlaying ? (
-                      <Pause size={13} />
+                      <>
+                        <span className="eq-icon" aria-hidden="true">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                        <Pause size={13} className="row-pause-icon" />
+                      </>
                     ) : (
                       <Play size={13} style={{ marginLeft: '1px' }} />
                     )}

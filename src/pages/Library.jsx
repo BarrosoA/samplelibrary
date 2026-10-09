@@ -131,6 +131,19 @@ export default function Library() {
     }
   };
 
+  // space toggles playback, except while typing or when a focused button would handle it itself
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.code !== 'Space' || e.repeat || !activeTrack) return;
+      const el = e.target;
+      if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(el.tagName)) return;
+      e.preventDefault();
+      setIsPlaying((playing) => !playing);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeTrack]);
+
   const handleNext = () => {
     if (!activeTrack || activeNavigationTracks.length === 0) return;
     const idx = activeNavigationTracks.findIndex((item) => item.track.id === activeTrack.id);

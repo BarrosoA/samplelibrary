@@ -1,4 +1,5 @@
 import React from 'react';
+import FadeImage from './FadeImage';
 
 export default function PackCard({ pack, onSelectPack }) {
   const count = pack.tracks ? pack.tracks.length : (pack.trackCount || 0);
@@ -10,7 +11,7 @@ export default function PackCard({ pack, onSelectPack }) {
       title={`${pack.name} (${count} tracks)`}
     >
       <div className="pack-artwork-wrap">
-        <img
+        <FadeImage
           src={pack.cover}
           alt={pack.name}
           className="pack-artwork-img"
