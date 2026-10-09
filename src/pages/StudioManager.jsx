@@ -21,6 +21,26 @@ import {
 import AddPackModal from '../components/AddPackModal';
 
 const NEW_LOOPS_ID = '__new_loops__';
+
+// compact drag badge instead of the browser's screenshot of the whole wide row
+function setDragPill(e, title, withIcon = true) {
+  const ghost = document.createElement('div');
+  ghost.className = 'studio-drag-ghost-pill';
+  if (withIcon) {
+    const icon = document.createElement('span');
+    icon.className = 'ghost-music-icon';
+    icon.textContent = '♫';
+    ghost.append(icon, ' ');
+  }
+  const label = document.createElement('span');
+  label.className = 'ghost-title';
+  label.textContent = title;
+  ghost.append(label);
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, 14, 14);
+  // the browser captures the image synchronously, so the element can go right away
+  setTimeout(() => ghost.remove(), 0);
+}
 const inboxAudioUrl = (filePath) => `/api/manage/inbox-audio?path=${encodeURIComponent(filePath)}`;
 
 export default function StudioManager() {
@@ -331,20 +351,7 @@ export default function StudioManager() {
     setDraggedTrack(track);
     e.dataTransfer.setData('text/plain', JSON.stringify({ trackId: track.id, sourcePackId: currentPack.id }));
     e.dataTransfer.effectAllowed = 'move';
-
-    // create a compact, elegant drag badge instead of dragging the entire wide row
-    const ghost = document.createElement('div');
-    ghost.className = 'studio-drag-ghost-pill';
-    ghost.innerHTML = `<span class="ghost-music-icon">♫</span> <span class="ghost-title">${track.title}</span>`;
-    document.body.appendChild(ghost);
-    e.dataTransfer.setDragImage(ghost, 14, 14);
-
-    // remove temporary ghost element from dom after browser captures screenshot
-    setTimeout(() => {
-      if (document.body.contains(ghost)) {
-        document.body.removeChild(ghost);
-      }
-    }, 0);
+    setDragPill(e, track.title);
   };
 
   const handleDragEnd = () => {
@@ -358,18 +365,7 @@ export default function StudioManager() {
     setDraggedPack(pack);
     e.dataTransfer.setData('text/plain', JSON.stringify({ packId: pack.id }));
     e.dataTransfer.effectAllowed = 'move';
-
-    const ghost = document.createElement('div');
-    ghost.className = 'studio-drag-ghost-pill';
-    ghost.innerHTML = `<span class="ghost-title">${pack.name}</span>`;
-    document.body.appendChild(ghost);
-    e.dataTransfer.setDragImage(ghost, 14, 14);
-
-    setTimeout(() => {
-      if (document.body.contains(ghost)) {
-        document.body.removeChild(ghost);
-      }
-    }, 0);
+    setDragPill(e, pack.name, false);
   };
 
   const handlePackDragEnd = () => {
@@ -581,6 +577,7 @@ export default function StudioManager() {
     setDraggedLoop(item);
     e.dataTransfer.setData('text/plain', item.path);
     e.dataTransfer.effectAllowed = 'copy';
+    setDragPill(e, item.title);
   };
 
   const handleLoopDragEnd = () => {
