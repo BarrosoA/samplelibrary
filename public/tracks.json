@@ -1,0 +1,38 @@
+{
+  "packs": [
+    {
+      "id": "pack-unreleased-01",
+      "name": "NO LUV - ARCHIVE 01",
+      "cover": "/images/pack-cover.jpg",
+      "trackCount": 2,
+      "description": "Original master samples and dark textures by NO LUV.",
+      "downloadUrl": "https://drive.google.com/drive/folders/1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u?usp=sharing",
+      "format": "WAV",
+      "license": "Royalty-Free",
+      "tracks": [
+        {
+          "id": "track-words-135",
+          "title": "words",
+          "bpm": 135,
+          "key": "Bbm",
+          "instrument": "Master Sample",
+          "duration": 241.78,
+          "previewUrl": "/audio/words-135-bbm.mp3",
+          "downloadUrl": "https://drive.google.com/uc?export=download&id=1hltY34LH5pvx0QkQ01KvPqO3LFq1LA9u",
+          "format": "WAV"
+        },
+        {
+          "id": "track-galeria-105",
+          "title": "galeria (siarbeats x noluv)",
+          "bpm": 105,
+          "key": "C#m",
+          "instrument": "Master Sample",
+          "duration": 111.47,
+          "previewUrl": "/audio/galeria-105-csharp-min.mp3",
+          "downloadUrl": "https://drive.google.com/uc?export=download&id=1KxhlELkrHAZ3do0Rv8y9nZqgERVZrKZq",
+          "format": "WAV"
+        }
+      ]
+    }
+  ]
+}
