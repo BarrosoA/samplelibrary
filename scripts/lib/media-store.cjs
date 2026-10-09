@@ -386,11 +386,18 @@ function parseAgeDays(text) {
   return n * AGE_UNITS[m[2].toLowerCase()];
 }
 
+function keepSettings() {
+  const { env } = loadEnvConfig();
+  return {
+    keepCount: Math.max(1, Number(env.CF_KEEP_DEPLOYMENTS || process.env.CF_KEEP_DEPLOYMENTS) || 5),
+    keepDays: Math.max(1, Number(env.CF_KEEP_DAYS || process.env.CF_KEEP_DAYS) || 14),
+  };
+}
+
 // old deployments keep serving retired files at their own URLs, so prune ones that are both old and not recent
 function pruneDeployments() {
-  const { projectName, env } = loadEnvConfig();
-  const keepCount = Math.max(1, Number(env.CF_KEEP_DEPLOYMENTS || process.env.CF_KEEP_DEPLOYMENTS) || 5);
-  const keepDays = Math.max(1, Number(env.CF_KEEP_DAYS || process.env.CF_KEEP_DAYS) || 14);
+  const { projectName } = loadEnvConfig();
+  const { keepCount, keepDays } = keepSettings();
 
   const deployments = JSON.parse(wrangler(`pages deployment list --project-name=${projectName} --json`))
     .map((dep) => ({ id: dep.Id, ageDays: parseAgeDays(dep.Status) }))
@@ -457,6 +464,8 @@ function cloudUsage(catalogue) {
   const live = readLastSnapshot(catalogue);
   return {
     fileLimit: PAGES_FILE_LIMIT,
+    fileSizeLimit: PART_SIZE + 1024 * 1024,
+    ...keepSettings(),
     live: live ? { ...measureSnapshot(live, sizeByKey), publishedAt: fs.statSync(d.state).mtimeMs } : null,
     afterPublish: measureSnapshot(current, sizeByKey),
     unpublishedChanges: !live || JSON.stringify(current) !== JSON.stringify(live),

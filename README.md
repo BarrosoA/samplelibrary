@@ -81,26 +81,40 @@ sample-library/
 │
 ├── src/
 │   ├── components/
+│   │   ├── studio/          # Studio Manager panels and hooks
+│   │   ├── AddPackModal.jsx
 │   │   ├── AudioPlayer.jsx
-│   │   ├── SampleCard.jsx
-│   │   ├── SearchBar.jsx
-│   │   └── FilterPanel.jsx
+│   │   ├── FadeImage.jsx
+│   │   └── PackCard.jsx
+│   │
+│   ├── data/
+│   │   └── tracks.json
 │   │
 │   ├── pages/
-│   │   └── Library.jsx
+│   │   ├── Library.jsx
+│   │   ├── PackDetail.jsx
+│   │   └── StudioManager.jsx
 │   │
 │   ├── styles/
 │   │   └── main.css
+│   │
+│   ├── utils/
+│   │   ├── coverColor.js
+│   │   └── download.js
 │   │
 │   └── main.jsx
 │
 ├── public/
 │   ├── tracks.json
 │   ├── images/
-│   └── favicon.ico
+│   ├── sw.js
+│   └── favicon.svg
 │
 ├── scripts/
-│   └── encode-previews.sh
+│   ├── lib/
+│   ├── generate-seo.cjs
+│   ├── manage.cjs
+│   └── media.cjs
 │
 ├── package.json
 ├── vite.config.js
@@ -118,15 +132,6 @@ npm run dev
 
 # build static bundle
 npm run build
-```
-
-## Preview Encoding
-
-Lossless audio files can be encoded to Opus using the script:
-
-```bash
-chmod +x scripts/encode-previews.sh
-./scripts/encode-previews.sh ./raw-samples ./previews 144k
 ```
 
 ## Publishing Workflow

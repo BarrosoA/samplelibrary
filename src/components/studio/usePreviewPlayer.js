@@ -1,0 +1,27 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+
+// one audition at a time, shared by the samples table and the New Loops list
+export default function usePreviewPlayer() {
+  const [playingId, setPlayingId] = useState(null);
+  const audioRef = useRef(null);
+
+  const toggle = useCallback(
+    (id, url) => {
+      if (audioRef.current) audioRef.current.pause();
+      if (playingId === id) {
+        setPlayingId(null);
+        return;
+      }
+      const audio = new Audio(url);
+      audio.play();
+      audio.onended = () => setPlayingId(null);
+      audioRef.current = audio;
+      setPlayingId(id);
+    },
+    [playingId]
+  );
+
+  useEffect(() => () => audioRef.current?.pause(), []);
+
+  return { playingId, toggle };
+}
