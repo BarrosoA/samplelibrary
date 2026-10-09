@@ -1,5 +1,4 @@
 import React from 'react';
-import { ListMusic } from 'lucide-react';
 
 export default function PackCard({ pack, onSelectPack }) {
   const count = pack.tracks ? pack.tracks.length : (pack.trackCount || 0);
@@ -17,11 +16,6 @@ export default function PackCard({ pack, onSelectPack }) {
           className="pack-artwork-img"
           loading="lazy"
         />
-
-        <div className="pack-badge">
-          <ListMusic size={13} strokeWidth={2.4} />
-          <span>{count}</span>
-        </div>
       </div>
 
       <div className="pack-info">
