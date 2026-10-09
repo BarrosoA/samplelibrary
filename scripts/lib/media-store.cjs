@@ -411,11 +411,63 @@ function pruneDeployments() {
   return { removed, kept: deployments.length - removed, keepCount, keepDays };
 }
 
+function deploySnapshot(catalogue) {
+  const d = dirs();
+  return [...listDeployFiles(d.deploy), ...catalogueMasters(catalogue).map((m) => `master:${m.key}:${m.size}`)].sort();
+}
+
+// free plan allows 20,000 files per deployment and has no total size cap
+const PAGES_FILE_LIMIT = 20000;
+
+function measureSnapshot(snapshot, sizeByKey) {
+  const stored = new Set();
+  let files = 0;
+  let bytes = 0;
+  for (const entry of snapshot.filter((e) => !e.startsWith('master:'))) {
+    const idx = entry.lastIndexOf(':');
+    stored.add(entry.slice(0, idx));
+    files += 1;
+    bytes += Number(entry.slice(idx + 1)) || 0;
+  }
+  // masters rebuilt from originals at publish time; ones kept as parts were already counted above
+  for (const entry of snapshot.filter((e) => e.startsWith('master:'))) {
+    const [, key, size] = entry.split(':');
+    if (stored.has(`m/${key}.0`)) continue;
+    const n = Number(size) || sizeByKey.get(key) || 0;
+    files += Math.max(1, Math.ceil(n / PART_SIZE));
+    bytes += n;
+  }
+  return { files, bytes };
+}
+
+// older snapshots recorded masters without their size
+function readLastSnapshot(catalogue) {
+  const d = dirs();
+  if (!fs.existsSync(d.state)) return null;
+  const sizeByKey = new Map(catalogueMasters(catalogue).map((m) => [m.key, m.size]));
+  return readJson(d.state, [])
+    .map((e) => (/^master:[0-9a-f]+$/.test(e) && sizeByKey.has(e.slice(7)) ? `${e}:${sizeByKey.get(e.slice(7))}` : e))
+    .sort();
+}
+
+function cloudUsage(catalogue) {
+  const d = ensureMediaDir();
+  const sizeByKey = new Map(catalogueMasters(catalogue).map((m) => [m.key, m.size]));
+  const current = deploySnapshot(catalogue);
+  const live = readLastSnapshot(catalogue);
+  return {
+    fileLimit: PAGES_FILE_LIMIT,
+    live: live ? { ...measureSnapshot(live, sizeByKey), publishedAt: fs.statSync(d.state).mtimeMs } : null,
+    afterPublish: measureSnapshot(current, sizeByKey),
+    unpublishedChanges: !live || JSON.stringify(current) !== JSON.stringify(live),
+  };
+}
+
 function deploy({ catalogue, force = false }) {
   const d = ensureMediaDir();
   const { projectName } = loadEnvConfig();
-  const snapshot = [...listDeployFiles(d.deploy), ...catalogueMasters(catalogue).map((m) => `master:${m.key}`)].sort();
-  const previous = readJson(d.state, []);
+  const snapshot = deploySnapshot(catalogue);
+  const previous = readLastSnapshot(catalogue) || [];
 
   let message;
   let deployed = false;
@@ -508,5 +560,6 @@ module.exports = {
   dismissInboxFile,
   parseAgeDays,
   pruneDeployments,
+  cloudUsage,
   deploy,
 };

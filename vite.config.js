@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
 const manager = require('./scripts/lib/catalogue-manager.cjs');
+const media = require('./scripts/lib/media-store.cjs');
 
 // the service worker loads client-zip's classic-script build via importScripts
 const CLIENT_ZIP_WORKER = fileURLToPath(new URL('./node_modules/client-zip/worker.js', import.meta.url));
@@ -185,6 +186,9 @@ function catalogueDevPlugin() {
               const result = manager.publishToGit();
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(result));
+            } else if (url === '/storage-stats') {
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(media.cloudUsage(manager.loadCatalogue())));
             } else if (url === '/inbox') {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(manager.listInbox()));

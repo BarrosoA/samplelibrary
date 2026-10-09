@@ -41,6 +41,11 @@ function setDragPill(e, title, withIcon = true) {
   // the browser captures the image synchronously, so the element can go right away
   setTimeout(() => ghost.remove(), 0);
 }
+function formatBytes(bytes) {
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  return `${Math.round(bytes / 1024 ** 2)} MB`;
+}
+
 const inboxAudioUrl = (filePath) => `/api/manage/inbox-audio?path=${encodeURIComponent(filePath)}`;
 
 export default function StudioManager() {
@@ -78,6 +83,19 @@ export default function StudioManager() {
       .then((data) => data && Array.isArray(data.items) && setInbox(data))
       .catch(() => {});
   }, []);
+
+  const [storage, setStorage] = useState(null);
+
+  const fetchStorage = useCallback(() => {
+    fetch('/api/manage/storage-stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setStorage(data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchStorage();
+  }, [catalogue, fetchStorage]);
 
   useEffect(() => {
     fetchInbox();
@@ -601,6 +619,7 @@ export default function StudioManager() {
       notify(err.message, 'error');
     } finally {
       setIsPublishing(false);
+      fetchStorage();
     }
   };
 
@@ -780,6 +799,33 @@ export default function StudioManager() {
               );
             })}
           </div>
+
+          {storage && (
+            <div
+              className="studio-storage-stat"
+              title="Worked out from what Studio Manager uploaded (Cloudflare doesn't report it). The free plan has no size limit; the limit is 20,000 files."
+            >
+              <div className="studio-storage-head">
+                <span>CLOUD STORAGE</span>
+                <span>{formatBytes((storage.live || storage.afterPublish).bytes)}</span>
+              </div>
+              <div className="studio-storage-bar">
+                <div
+                  className="studio-storage-fill"
+                  style={{ width: `${Math.min(100, ((storage.live || storage.afterPublish).files / storage.fileLimit) * 100)}%` }}
+                />
+              </div>
+              <div className="studio-storage-sub">
+                {(storage.live || storage.afterPublish).files.toLocaleString()} / {storage.fileLimit.toLocaleString()} files
+                {!storage.live && ' (not published yet)'}
+              </div>
+              {storage.live && storage.unpublishedChanges && (
+                <div className="studio-storage-sub studio-storage-pending">
+                  After publish: {formatBytes(storage.afterPublish.bytes)} · {storage.afterPublish.files.toLocaleString()} files
+                </div>
+              )}
+            </div>
+          )}
         </aside>
 
         {/* main workspace detail panel */}
