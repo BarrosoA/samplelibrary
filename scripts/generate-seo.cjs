@@ -46,7 +46,7 @@ function generateSeo() {
     fs.mkdirSync(packDir, { recursive: true });
 
     const packTitle = `${pack.name} — NO LUV`;
-    const packDesc = pack.description || `Original master samples and lossless audio by NO LUV. ${pack.tracks ? pack.tracks.length : 0} samples included.`;
+    const packDesc = pack.description || `Original master samples by @noluvmusic. ${pack.tracks ? pack.tracks.length : 0} samples included.`;
     const packCover = pack.cover || (latestPack ? latestPack.cover : '/images/pack-cover.jpg');
 
     let packHtml = baseHtml

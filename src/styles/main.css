@@ -499,6 +499,16 @@ a {
   color: var(--text-muted);
 }
 
+.col-bpm,
+.col-key,
+.col-duration,
+.col-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 .meta-badge {
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -514,6 +524,7 @@ a {
 .row-download-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   background: transparent;
   border: none;
@@ -1632,6 +1643,10 @@ a {
 .st-col-meta {
   font-size: 0.74rem;
   color: #888888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .st-badge {
@@ -1642,6 +1657,10 @@ a {
 .st-col-dur {
   font-size: 0.74rem;
   color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .st-col-del {
