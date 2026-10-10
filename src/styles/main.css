@@ -250,7 +250,6 @@ a {
 .detail-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 
 /* small light/dark-style switch: cover background vs a faint colour glow */
@@ -2246,13 +2245,28 @@ a {
     top: calc(-1 * var(--page-top)); /* reaches the top of the window */
     left: 50%;
     width: 100vw;
-    height: 460px;
+    height: 220px;
     transform: translateX(-50%);
     background: radial-gradient(ellipse 70% 100% at 50% 0%, rgba(var(--glow-rgb, 0, 0, 0), 0.22), transparent 75%);
   }
 
   .pack-glow.is-minimal::before {
     display: none;
+  }
+}
+
+/* top right of the window, level with the back arrow; scrolls away with the page */
+.pack-detail-page > .backdrop-toggle {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  z-index: 2;
+}
+
+@media (min-width: 960px) {
+  .pack-detail-page > .backdrop-toggle {
+    /* from the centred content column out to the window edge (the extra px clears the scrollbar) */
+    right: calc(50% - 50vw + 40px);
   }
 }
 

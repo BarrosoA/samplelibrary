@@ -124,21 +124,21 @@ export default function PackDetail({
         <button className="back-btn" onClick={onBack} title="Back to all packs" aria-label="Back to all packs">
           <ArrowLeft size={20} />
         </button>
-
-        <button
-          type="button"
-          role="switch"
-          aria-checked={backdrop === 'minimal'}
-          className={`backdrop-toggle is-${backdrop}`}
-          onClick={toggleBackdrop}
-          title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the cover background'}
-          aria-label="Minimal background"
-        >
-          <span className="backdrop-toggle-knob" aria-hidden="true" />
-          <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
-          <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
-        </button>
       </nav>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={backdrop === 'minimal'}
+        className={`backdrop-toggle is-${backdrop}`}
+        onClick={toggleBackdrop}
+        title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the cover background'}
+        aria-label="Minimal background"
+      >
+        <span className="backdrop-toggle-knob" aria-hidden="true" />
+        <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
+        <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
+      </button>
 
       {/* album hero banner */}
       <section className="album-hero">
