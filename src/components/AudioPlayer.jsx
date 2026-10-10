@@ -315,6 +315,7 @@ export default function AudioPlayer({
             type="button"
             onClick={handlePlayerDownload}
             className={`player-download-btn ${downloadState !== 'idle' ? `is-${downloadState}` : ''}`}
+            aria-label={`Download ${currentTrack.format || 'WAV'}`}
             title={
               downloadState === 'loading'
                 ? 'Download starting...'
@@ -331,7 +332,6 @@ export default function AudioPlayer({
             ) : (
               <Download size={14} />
             )}
-            <span>{currentTrack.format || 'WAV'}</span>
           </button>
         </div>
       </div>
