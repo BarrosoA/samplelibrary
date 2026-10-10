@@ -804,11 +804,11 @@ a {
   opacity: 1;
 }
 
-.player-download-btn {
+/* volume and download share one look: plain 20px icons */
+.player-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 4px;
   padding: 4px;
   background: transparent;
   border: none;
@@ -818,7 +818,7 @@ a {
   cursor: pointer;
 }
 
-.player-download-btn:hover,
+.player-icon-btn:hover,
 .player-download-btn.is-loading,
 .player-download-btn.is-done {
   color: #ffffff;
@@ -1959,12 +1959,6 @@ a {
   }
   .app-wrapper:has(.audio-player-bar) .studio-fab {
     bottom: calc(112px + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-@media (max-width: 360px) {
-  .ctrl-btn-loop {
-    display: none; /* it stays on by default */
   }
 }
 

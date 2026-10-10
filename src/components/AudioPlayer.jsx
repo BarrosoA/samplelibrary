@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Play, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
+import { Play, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
 import PauseIcon from './PauseIcon';
 import { canDownloadTrack, downloadTrack } from '../utils/download';
 
@@ -53,7 +53,6 @@ export default function AudioPlayer({
 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isLooping, setIsLooping] = useState(true);
   const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
   const [downloadState, setDownloadState] = useState('idle');
@@ -140,11 +139,6 @@ export default function AudioPlayer({
     audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.loop = isLooping;
-  }, [isLooping]);
-
   const handleTimeUpdate = () => {
     if (!audioRef.current) return;
     setCurrentTime(audioRef.current.currentTime);
@@ -185,12 +179,6 @@ export default function AudioPlayer({
     setScrubTime(null);
   };
 
-  const handleEnded = () => {
-    if (!isLooping && onNext) {
-      onNext();
-    }
-  };
-
   const formatTime = (sec) => {
     if (!Number.isFinite(sec) || sec <= 0) return '0:00';
     const m = Math.floor(sec / 60);
@@ -207,11 +195,12 @@ export default function AudioPlayer({
 
   return (
     <footer className="audio-player-bar">
+      {/* samples always loop */}
       <audio
         ref={audioRef}
+        loop
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
       />
 
       <div className="player-inner">
@@ -279,22 +268,14 @@ export default function AudioPlayer({
         </div>
 
         <div className="player-right">
-          <button
-            className={`ctrl-btn ctrl-btn-loop ${isLooping ? 'active' : ''}`}
-            onClick={() => setIsLooping(!isLooping)}
-            title={isLooping ? 'Loop active' : 'Loop inactive'}
-          >
-            <Repeat size={14} />
-          </button>
-
           {/* the slider slides out while the speaker is hovered */}
           <div className="volume-container">
             <button
-              className="ctrl-btn"
+              className="player-icon-btn"
               onClick={() => setIsMuted(!isMuted)}
               title={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted || volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+              {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </button>
             <input
               type="range"
@@ -314,7 +295,7 @@ export default function AudioPlayer({
           <button
             type="button"
             onClick={handlePlayerDownload}
-            className={`player-download-btn ${downloadState !== 'idle' ? `is-${downloadState}` : ''}`}
+            className={`player-icon-btn player-download-btn ${downloadState !== 'idle' ? `is-${downloadState}` : ''}`}
             aria-label={`Download ${currentTrack.format || 'WAV'}`}
             title={
               downloadState === 'loading'
