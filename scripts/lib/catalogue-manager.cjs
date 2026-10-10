@@ -198,9 +198,10 @@ function encodePreviewAudio(inputFilePath) {
   }
 }
 
-const PEAK_COUNT = 160;
+const PEAK_COUNT = 100;
 
-// waveform for the player: PEAK_COUNT bar heights from 0 to 100, loudest bar = 100
+// waveform for the player: PEAK_COUNT bar heights from 0 to 100, loudest bar = 100.
+// average loudness (RMS) per bar follows the music's shape; single peaks made it spiky
 function computePeaks(audioPath) {
   try {
     // mono 16-bit at a low rate is plenty for bar heights and keeps a long file to a few MB
@@ -211,15 +212,18 @@ function computePeaks(audioPath) {
     const samples = new Int16Array(raw.buffer, raw.byteOffset, Math.floor(raw.length / 2));
     if (samples.length === 0) return null;
 
-    const peaks = [];
+    const levels = [];
     const size = samples.length / PEAK_COUNT;
     for (let i = 0; i < PEAK_COUNT; i++) {
-      let max = 0;
-      for (let j = Math.floor(i * size); j < Math.floor((i + 1) * size); j++) max = Math.max(max, Math.abs(samples[j]));
-      peaks.push(max);
+      const from = Math.floor(i * size);
+      const to = Math.max(from + 1, Math.floor((i + 1) * size));
+      let sum = 0;
+      for (let j = from; j < to; j++) sum += samples[j] * samples[j];
+      levels.push(Math.sqrt(sum / (to - from)));
     }
-    const loudest = Math.max(...peaks) || 1;
-    return peaks.map((p) => Math.round((p / loudest) * 100));
+    const loudest = Math.max(...levels) || 1;
+    // the curve lifts quiet passages so they stay visible next to loud ones
+    return levels.map((l) => Math.round(Math.pow(l / loudest, 0.6) * 100));
   } catch (err) {
     console.warn(`[peaks] skipped ${path.basename(audioPath)}: ${err.message.split('\n')[0]}`);
     return null;

@@ -1,24 +1,20 @@
-import React, { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
 import { canDownloadTrack, downloadTrack } from '../utils/download';
 
-// mirrored bars from the catalogue's peaks; the played part is the same bars clipped to the progress
+// mirrored bars from the catalogue's peaks; bars up to the playhead turn white.
+// real elements rather than a stretched svg, so the rounded ends stay round at any width
 function Waveform({ peaks, percent }) {
-  const clipId = useId();
-  const bars = peaks.map((p, i) => {
-    const h = Math.max(4, p);
-    return <rect key={i} x={i + 0.2} y={(100 - h) / 2} width={0.6} height={h} />;
-  });
   return (
-    <svg className="waveform" viewBox={`0 0 ${peaks.length} 100`} preserveAspectRatio="none" aria-hidden="true">
-      <clipPath id={clipId}>
-        <rect x="0" y="0" width={(peaks.length * percent) / 100} height="100" />
-      </clipPath>
-      <g className="waveform-rest">{bars}</g>
-      <g className="waveform-played" clipPath={`url(#${clipId})`}>
-        {bars}
-      </g>
-    </svg>
+    <div className="waveform" aria-hidden="true">
+      {peaks.map((p, i) => (
+        <span
+          key={i}
+          className={(i + 0.5) / peaks.length <= percent / 100 ? 'is-played' : ''}
+          style={{ height: `${Math.max(8, p)}%` }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -210,7 +206,7 @@ export default function AudioPlayer({
             <div className="player-track-details">
               {currentPack?.name ? `${currentPack.name} • ` : ''}
               {currentTrack.bpm ? `${currentTrack.bpm} BPM` : ''}
-              {currentTrack.key ? ` • ${currentTrack.key}` : ''}
+              {currentTrack.key && currentTrack.key !== '-' ? ` • ${currentTrack.key}` : ''}
             </div>
           </div>
         </div>

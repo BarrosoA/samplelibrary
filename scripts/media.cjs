@@ -95,13 +95,15 @@ function adopt() {
   console.log(`\n${adopted.length} stored copies removed, ${kept.length} kept.`);
 }
 
-// adds player waveforms to samples added before waveforms existed, from their local preview copy
+// adds player waveforms to samples added before waveforms existed, from their local preview copy;
+// --force recalculates every one (after the waveform calculation changes)
 function peaks() {
+  const force = process.argv.includes('--force');
   const data = manager.loadCatalogue();
   const { deploy } = media.ensureMediaDir();
   let added = 0;
   for (const track of (data.packs || []).flatMap((p) => p.tracks || [])) {
-    if (Array.isArray(track.peaks) && track.peaks.length) continue;
+    if (!force && Array.isArray(track.peaks) && track.peaks.length) continue;
     const rel = media.relPathFromUrl(track.previewUrl);
     const file = rel && path.join(deploy, rel);
     if (!file || !fs.existsSync(file)) {
