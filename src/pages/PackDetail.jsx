@@ -243,23 +243,15 @@ export default function PackDetail({
                         ? 'Download started'
                         : `Download lossless ${track.format || 'WAV'}`
                     }
+                    aria-label={`Download ${track.format || 'WAV'}`}
                     disabled={Boolean(downloadStates[track.id])}
                   >
                     {downloadStates[track.id] === 'loading' ? (
-                      <>
-                        <Loader2 size={13} className="spin-icon" />
-                        <span>STARTING</span>
-                      </>
+                      <Loader2 size={20} className="spin-icon" />
                     ) : downloadStates[track.id] === 'done' ? (
-                      <>
-                        <Check size={13} />
-                        <span>STARTED</span>
-                      </>
+                      <Check size={20} />
                     ) : (
-                      <>
-                        <Download size={13} />
-                        <span>{track.format || 'WAV'}</span>
-                      </>
+                      <Download size={20} />
                     )}
                   </button>
                 </div>
