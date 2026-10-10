@@ -1,5 +1,14 @@
 @echo off
 title Sample Library - Studio Manager
+cd /d "%~dp0"
+
+:: already running (e.g. opened again from the STUDIO button): just show it
+netstat -ano | findstr /r /c:":5173 .*LISTENING" >nul
+if %errorlevel%==0 (
+  start "" http://localhost:5173/#/manage
+  exit /b
+)
+
 echo Starting local Studio Manager...
 echo.
 echo Close this window at any time to stop the server.
@@ -9,6 +18,4 @@ echo.
 start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:5173/#/manage"
 
 :: run local vite dev server
-cd /d "%~dp0"
 npm.cmd run dev
-

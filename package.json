@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "manage": "node scripts/manage.cjs",
     "telegram:setup": "node scripts/telegram-setup.cjs",
+    "studio:link": "node scripts/studio-link.cjs",
     "media:migrate": "node scripts/media.cjs migrate",
     "media:deploy": "node scripts/media.cjs deploy",
     "media:rebase": "node scripts/media.cjs rebase",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search } from 'lucide-react';
+import { Search, FolderKanban } from 'lucide-react';
+import { readOwnerFlag, STUDIO_LINK } from '../utils/owner';
 import PackCard from '../components/PackCard';
 import PackDetail from './PackDetail';
 import AudioPlayer from '../components/AudioPlayer';
@@ -13,6 +14,7 @@ export default function Library() {
   const [error, setError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOwner] = useState(readOwnerFlag);
 
   const [selectedPack, setSelectedPack] = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
@@ -175,18 +177,27 @@ export default function Library() {
             <span>NO LUV LIBRARY</span>
           </div>
 
-          <div className="search-mini">
-            <Search size={14} className="search-mini-icon" />
-            <input
-              type="text"
-              className="search-mini-input"
-              placeholder="Search packs & sounds..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (selectedPack) setSelectedPack(null);
-              }}
-            />
+          <div className="top-nav-right">
+            <div className="search-mini">
+              <Search size={14} className="search-mini-icon" />
+              <input
+                type="text"
+                className="search-mini-input"
+                placeholder="Search packs & sounds..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (selectedPack) setSelectedPack(null);
+                }}
+              />
+            </div>
+
+            {isOwner && (
+              <a className="top-add-pack-btn" href={STUDIO_LINK} title="Open Studio Manager on this PC">
+                <FolderKanban size={14} />
+                <span>STUDIO</span>
+              </a>
+            )}
           </div>
         </header>
       )}
