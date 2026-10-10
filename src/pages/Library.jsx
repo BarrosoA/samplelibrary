@@ -14,7 +14,14 @@ export default function Library() {
   const [error, setError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [isOwner] = useState(readOwnerFlag);
+  const [isOwner, setIsOwner] = useState(readOwnerFlag);
+
+  // typing #/me into the address bar of an open tab doesn't reload the page
+  useEffect(() => {
+    const recheck = () => setIsOwner(readOwnerFlag());
+    window.addEventListener('hashchange', recheck);
+    return () => window.removeEventListener('hashchange', recheck);
+  }, []);
 
   const [selectedPack, setSelectedPack] = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
