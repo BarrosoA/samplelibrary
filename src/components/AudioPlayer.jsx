@@ -1,17 +1,38 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Play, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
 import PauseIcon from './PauseIcon';
 import { canDownloadTrack, downloadTrack } from '../utils/download';
 
+// at least this many pixels per bar (bar + gap), so narrow screens get fewer, merged bars
+const WAVE_BAR_PITCH = 3;
+
 // mirrored bars from the catalogue's peaks; bars up to the playhead turn white.
 // real elements rather than a stretched svg, so the rounded ends stay round at any width
 function Waveform({ peaks, percent }) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const count = width ? Math.max(1, Math.min(peaks.length, Math.floor(width / WAVE_BAR_PITCH))) : peaks.length;
+  const bars = useMemo(() => {
+    if (count === peaks.length) return peaks;
+    return Array.from({ length: count }, (_, i) => {
+      const group = peaks.slice(Math.floor((i * peaks.length) / count), Math.floor(((i + 1) * peaks.length) / count));
+      return Math.max(...group);
+    });
+  }, [peaks, count]);
+
   return (
-    <div className="waveform" aria-hidden="true">
-      {peaks.map((p, i) => (
+    <div className="waveform" ref={ref} aria-hidden="true">
+      {bars.map((p, i) => (
         <span
           key={i}
-          className={(i + 0.5) / peaks.length <= percent / 100 ? 'is-played' : ''}
+          className={(i + 0.5) / bars.length <= percent / 100 ? 'is-played' : ''}
           style={{ height: `${Math.max(8, p)}%` }}
         />
       ))}
@@ -212,62 +233,61 @@ export default function AudioPlayer({
           </div>
         </div>
 
-        <div className="player-center">
-          <div className="player-controls-row">
-            <button className="ctrl-btn" onClick={onPrevious} title="Previous">
-              <SkipBack size={15} />
-            </button>
+        <div className="player-controls-row">
+          <button className="ctrl-btn" onClick={onPrevious} title="Previous">
+            <SkipBack size={15} />
+          </button>
 
-            <button
-              className="ctrl-btn ctrl-btn-play"
-              onClick={() => onPlayPause(currentTrack, currentPack)}
-              title={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <PauseIcon size={14} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
-            </button>
+          <button
+            className="ctrl-btn ctrl-btn-play"
+            onClick={() => onPlayPause(currentTrack, currentPack)}
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? <PauseIcon size={14} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
+          </button>
 
-            <button className="ctrl-btn" onClick={onNext} title="Next">
-              <SkipForward size={15} />
-            </button>
+          <button className="ctrl-btn" onClick={onNext} title="Next">
+            <SkipForward size={15} />
+          </button>
+        </div>
 
-            <button
-              className={`ctrl-btn ${isLooping ? 'active' : ''}`}
-              onClick={() => setIsLooping(!isLooping)}
-              title={isLooping ? 'Loop active' : 'Loop inactive'}
-            >
-              <Repeat size={14} />
-            </button>
+        <div className="timeline-container">
+          <span className="time-label">{formatTime(shownTime)}</span>
+          <div
+            className={`progress-bar-wrap ${hasWaveform ? 'has-waveform' : ''} ${scrubTime !== null ? 'is-scrubbing' : ''}`}
+            ref={progressBarRef}
+            onPointerDown={handleScrubStart}
+            onPointerMove={handleScrubMove}
+            onPointerUp={handleScrubEnd}
+            onPointerCancel={() => setScrubTime(null)}
+            role="slider"
+            aria-label="Seek"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(totalDuration)}
+            aria-valuenow={Math.round(shownTime)}
+          >
+            {hasWaveform ? (
+              <Waveform peaks={currentTrack.peaks} percent={progressPercent} />
+            ) : (
+              <>
+                <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+                <div className="progress-thumb" style={{ left: `${progressPercent}%` }} />
+              </>
+            )}
           </div>
-
-          <div className="timeline-container">
-            <span className="time-label">{formatTime(shownTime)}</span>
-            <div
-              className={`progress-bar-wrap ${hasWaveform ? 'has-waveform' : ''} ${scrubTime !== null ? 'is-scrubbing' : ''}`}
-              ref={progressBarRef}
-              onPointerDown={handleScrubStart}
-              onPointerMove={handleScrubMove}
-              onPointerUp={handleScrubEnd}
-              onPointerCancel={() => setScrubTime(null)}
-              role="slider"
-              aria-label="Seek"
-              aria-valuemin={0}
-              aria-valuemax={Math.round(totalDuration)}
-              aria-valuenow={Math.round(shownTime)}
-            >
-              {hasWaveform ? (
-                <Waveform peaks={currentTrack.peaks} percent={progressPercent} />
-              ) : (
-                <>
-                  <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
-                  <div className="progress-thumb" style={{ left: `${progressPercent}%` }} />
-                </>
-              )}
-            </div>
-            <span className="time-label right">{formatTime(totalDuration)}</span>
-          </div>
+          <span className="time-label right">{formatTime(totalDuration)}</span>
         </div>
 
         <div className="player-right">
+          <button
+            className={`ctrl-btn ctrl-btn-loop ${isLooping ? 'active' : ''}`}
+            onClick={() => setIsLooping(!isLooping)}
+            title={isLooping ? 'Loop active' : 'Loop inactive'}
+          >
+            <Repeat size={14} />
+          </button>
+
+          {/* the slider slides out while the speaker is hovered */}
           <div className="volume-container">
             <button
               className="ctrl-btn"
@@ -305,12 +325,13 @@ export default function AudioPlayer({
             disabled={downloadState !== 'idle'}
           >
             {downloadState === 'loading' ? (
-              <Loader2 size={15} className="spin-icon" />
+              <Loader2 size={14} className="spin-icon" />
             ) : downloadState === 'done' ? (
-              <Check size={15} />
+              <Check size={14} />
             ) : (
-              <Download size={15} />
+              <Download size={14} />
             )}
+            <span>{currentTrack.format || 'WAV'}</span>
           </button>
         </div>
       </div>

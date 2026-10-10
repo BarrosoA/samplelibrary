@@ -652,9 +652,10 @@ a {
   max-width: var(--content-width);
   width: 100%;
   display: grid;
-  grid-template-columns: 240px 1fr 180px;
+  /* one row: track info, transport, the waveform taking the free space, then loop/volume/download */
+  grid-template-columns: minmax(0, 200px) auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .player-left {
@@ -695,20 +696,10 @@ a {
   text-overflow: ellipsis;
 }
 
-.player-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-}
-
 .player-controls-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .ctrl-btn {
@@ -745,8 +736,9 @@ a {
 .timeline-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
+  min-width: 0;
 }
 
 .time-label {
@@ -787,43 +779,58 @@ a {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
 }
 
 .volume-container {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
+/* tucked away until the speaker is hovered or focused */
 .volume-slider {
-  width: 64px;
+  width: 0;
   height: 3px;
+  margin: 0;
+  opacity: 0;
   accent-color: #ffffff;
   cursor: pointer;
+  transition: width 0.2s ease, opacity 0.2s ease, margin 0.2s ease;
+}
+
+.volume-container:hover .volume-slider,
+.volume-container:focus-within .volume-slider {
+  width: 64px;
+  margin: 0 4px 0 2px;
+  opacity: 1;
 }
 
 .player-download-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  margin-left: 4px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
   background: transparent;
-  border: none;
-  padding: 4px;
-  color: var(--text-muted);
-  transition: color 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ededed;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   flex-shrink: 0;
   cursor: pointer;
 }
 
-.player-download-btn:hover {
-  color: #ffffff;
-}
-
+.player-download-btn:hover,
 .player-download-btn.is-loading,
 .player-download-btn.is-done {
-  color: #ffffff;
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0f0f0f;
 }
 
 .player-download-btn:disabled {
@@ -1918,25 +1925,24 @@ a {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       'info controls'
-      'time download';
+      'time tools';
     gap: 8px 12px;
-  }
-  .player-center,
-  .player-right {
-    display: contents;
   }
   .player-left {
     grid-area: info;
   }
   .player-controls-row {
     grid-area: controls;
-    gap: 10px;
   }
   .timeline-container {
     grid-area: time;
   }
+  .player-right {
+    grid-area: tools;
+    gap: 4px;
+  }
   .player-download-btn {
-    grid-area: download;
+    padding: 6px 12px;
   }
   .volume-container {
     display: none; /* phones use their volume buttons; iOS ignores the slider */
@@ -1969,8 +1975,8 @@ a {
 }
 
 @media (max-width: 360px) {
-  .player-controls-row .ctrl-btn:not(.ctrl-btn-play):last-child {
-    display: none; /* loop toggle; it stays on by default */
+  .ctrl-btn-loop {
+    display: none; /* it stays on by default */
   }
 }
 
@@ -2248,13 +2254,14 @@ a {
 .progress-bar-wrap.has-waveform,
 .progress-bar-wrap.has-waveform:hover,
 .progress-bar-wrap.has-waveform.is-scrubbing {
-  height: 28px;
+  height: 32px;
   background: none;
   border-radius: 0;
 }
 
 .waveform {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 1px;
   width: 100%;
@@ -2263,7 +2270,7 @@ a {
 
 .waveform span {
   flex: 1;
-  min-width: 1px;
+  min-width: 0;
   border-radius: 9999px;
   background: #3a3a3a;
   transition: background 0.15s ease;
