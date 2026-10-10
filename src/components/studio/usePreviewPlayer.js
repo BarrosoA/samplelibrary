@@ -13,6 +13,7 @@ export default function usePreviewPlayer() {
         return;
       }
       const audio = new Audio(url);
+      audio.volume = 0.25;
       audio.play();
       audio.onended = () => setPlayingId(null);
       audioRef.current = audio;

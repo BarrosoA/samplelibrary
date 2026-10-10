@@ -6,6 +6,9 @@ import { canDownloadTrack, downloadTrack } from '../utils/download';
 // at least this many pixels per bar (bar + gap), so narrow screens get fewer, merged bars
 const WAVE_BAR_PITCH = 3;
 
+// ears hear loudness logarithmically, so a squared curve makes the slider position match how loud it sounds
+const sliderGain = (v) => v * v;
+
 // mirrored bars from the catalogue's peaks; bars up to the playhead turn white.
 // real elements rather than a stretched svg, so the rounded ends stay round at any width
 function Waveform({ peaks, percent }) {
@@ -90,6 +93,7 @@ export default function AudioPlayer({
     let objectUrl = null;
 
     const start = (src) => {
+      audio.volume = isMuted ? 0 : sliderGain(volume);
       audio.src = src;
       audio.load();
       if (isPlayingRef.current) {
@@ -136,7 +140,7 @@ export default function AudioPlayer({
 
   useEffect(() => {
     if (!audioRef.current) return;
-    audioRef.current.volume = isMuted ? 0 : volume;
+    audioRef.current.volume = isMuted ? 0 : sliderGain(volume);
   }, [volume, isMuted]);
 
   const handleTimeUpdate = () => {
