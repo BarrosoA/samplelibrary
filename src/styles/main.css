@@ -240,23 +240,38 @@ a {
   align-items: center;
 }
 
+/* a bare arrow with a 36px hit area; the negative margin lines the arrow up with the cover's edge */
 .back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
   background: transparent;
   border: none;
+  border-radius: 50%;
   color: var(--text-muted);
   padding: 0;
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
   transition: color 0.15s ease;
   cursor: pointer;
 }
 
 .back-btn:hover {
   color: #ffffff;
+}
+
+/* wide enough to hang the arrow in the margin left of the cover, keeping the content column aligned;
+   nav selector outranks the glow rule's position: relative further down */
+@media (min-width: 960px) {
+  .pack-detail-page > nav.detail-nav {
+    position: absolute;
+    top: 0;
+    left: -48px;
+  }
+  .back-btn {
+    margin-left: 0;
+  }
 }
 
 .album-hero {

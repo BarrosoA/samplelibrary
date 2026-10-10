@@ -97,9 +97,8 @@ export default function PackDetail({
 
       {/* back navigation */}
       <nav className="detail-nav">
-        <button className="back-btn" onClick={onBack} title="Back to all packs">
-          <ArrowLeft size={16} />
-          <span>BACK TO PACKS</span>
+        <button className="back-btn" onClick={onBack} title="Back to all packs" aria-label="Back to all packs">
+          <ArrowLeft size={20} />
         </button>
       </nav>
 
