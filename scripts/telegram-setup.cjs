@@ -9,19 +9,23 @@ const api = async (token, method, body) => {
     body: JSON.stringify(body || {}),
   });
   const data = await res.json().catch(() => ({}));
+  if (data.error_code === 401) throw new Error('Telegram rejected the token. Copy it again from BotFather, or send /token there to see it.');
   if (!data.ok) throw new Error(data.description || `Telegram answered HTTP ${res.status}`);
   return data.result;
 };
 
-function ask(question, { hidden = false } = {}) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-  // keeps the token off the screen while it's pasted
-  if (hidden) rl._writeToOutput = (s) => rl.output.write(s.startsWith(question) ? question : '');
+function ask(question, { wipe = false } = {}) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) =>
     rl.question(question, (answer) => {
       rl.close();
-      if (hidden) process.stdout.write('\n');
-      resolve(answer.trim());
+      // takes the pasted token back off the screen once it has been read
+      if (wipe && process.stdout.isTTY) {
+        readline.moveCursor(process.stdout, 0, -1);
+        readline.clearLine(process.stdout, 0);
+        process.stdout.write(`${question}(received)\n`);
+      }
+      resolve(answer);
     })
   );
 }
@@ -31,8 +35,10 @@ async function main() {
   console.log('1. In Telegram, open @BotFather, send /newbot and follow the steps.');
   console.log('2. BotFather replies with a token like 123456789:ABC-...\n');
 
-  const token = await ask('Paste the bot token (hidden): ', { hidden: true });
-  if (!/^\d+:[\w-]{30,}$/.test(token)) throw new Error("That doesn't look like a bot token.");
+  // right-click or Ctrl+V pastes in the VS Code terminal; extra text around the token is ignored
+  const pasted = await ask('Paste the bot token and press Enter: ', { wipe: true });
+  const token = (pasted.match(/\d{5,}:[\w-]{30,}/) || [])[0];
+  if (!token) throw new Error("Couldn't find a bot token in what was pasted. It looks like 123456789:AAH... (copy it from BotFather's message).");
   const bot = await api(token, 'getMe');
 
   console.log(`\n3. Open https://t.me/${bot.username} in Telegram, press Start (or send it any message).`);
