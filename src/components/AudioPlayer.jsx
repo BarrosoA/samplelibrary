@@ -32,13 +32,17 @@ function Waveform({ peaks, percent }) {
 
   return (
     <div className="waveform" ref={ref} aria-hidden="true">
-      {bars.map((p, i) => (
-        <span
-          key={i}
-          className={(i + 0.5) / bars.length <= percent / 100 ? 'is-played' : ''}
-          style={{ height: `${Math.max(8, p)}%` }}
-        />
-      ))}
+      {bars.map((p, i) => {
+        // how much of this bar the playhead has passed, so the bar under it fills gradually
+        const fill = Math.max(0, Math.min(1, (percent / 100) * bars.length - i));
+        return (
+          <span
+            key={i}
+            className={fill === 1 ? 'is-played' : fill > 0 ? 'is-partial' : ''}
+            style={{ height: `${Math.max(8, p)}%`, ...(fill > 0 && fill < 1 && { '--fill': `${fill * 100}%` }) }}
+          />
+        );
+      })}
     </div>
   );
 }

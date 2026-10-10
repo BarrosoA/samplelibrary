@@ -91,7 +91,7 @@ export default function PackDetail({
     <div className="pack-detail-page">
       <div
         className={`pack-glow ${glowColor ? 'is-visible' : ''}`}
-        style={glowColor ? { '--glow-rgb': glowColor.join(', ') } : undefined}
+        style={pack.cover ? { '--glow-cover': `url(${JSON.stringify(pack.cover)})` } : undefined}
         aria-hidden="true"
       />
 
