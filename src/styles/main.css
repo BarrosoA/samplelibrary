@@ -130,7 +130,6 @@ a {
   transition: all 0.15s ease;
   cursor: pointer;
   white-space: nowrap;
-  text-decoration: none;
 }
 
 .top-add-pack-btn:hover {
@@ -597,6 +596,35 @@ a {
 .row-delete-btn:hover {
   color: #ff5555;
   background: rgba(255, 85, 85, 0.12);
+}
+
+/* owner-only shortcut to the local Studio Manager; sits above the player bar while it's open */
+.studio-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #9a9a9a;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, bottom 0.2s ease;
+}
+
+.studio-fab:hover {
+  opacity: 1;
+  background: #ffffff;
+  color: #0f0f0f;
+}
+
+.app-wrapper:has(.audio-player-bar) .studio-fab {
+  bottom: 92px;
 }
 
 /* Audio Player Bar (centered, neat, organized) */
@@ -1783,12 +1811,8 @@ a {
     gap: 14px;
     margin-bottom: 22px;
   }
-  .top-nav-right {
-    width: 100%;
-  }
   .search-mini {
     width: 100%;
-    flex: 1;
   }
   .search-mini-input {
     font-size: 16px; /* below 16px iOS zooms the page when the field is focused */
@@ -1927,6 +1951,12 @@ a {
     content: '';
     position: absolute;
     inset: -12px 0;
+  }
+  .studio-fab {
+    right: 16px;
+  }
+  .app-wrapper:has(.audio-player-bar) .studio-fab {
+    bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   }
 }
 

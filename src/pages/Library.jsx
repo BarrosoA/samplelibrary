@@ -184,27 +184,18 @@ export default function Library() {
             <span>NO LUV LIBRARY</span>
           </div>
 
-          <div className="top-nav-right">
-            <div className="search-mini">
-              <Search size={14} className="search-mini-icon" />
-              <input
-                type="text"
-                className="search-mini-input"
-                placeholder="Search packs & sounds..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (selectedPack) setSelectedPack(null);
-                }}
-              />
-            </div>
-
-            {isOwner && (
-              <a className="top-add-pack-btn" href={STUDIO_LINK} title="Open Studio Manager on this PC">
-                <FolderKanban size={14} />
-                <span>STUDIO</span>
-              </a>
-            )}
+          <div className="search-mini">
+            <Search size={14} className="search-mini-icon" />
+            <input
+              type="text"
+              className="search-mini-input"
+              placeholder="Search packs & sounds..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (selectedPack) setSelectedPack(null);
+              }}
+            />
           </div>
         </header>
       )}
@@ -249,6 +240,12 @@ export default function Library() {
             ))}
           </section>
         </>
+      )}
+
+      {isOwner && (
+        <a className="studio-fab" href={STUDIO_LINK} title="Open Studio Manager" aria-label="Open Studio Manager">
+          <FolderKanban size={16} />
+        </a>
       )}
 
       {/* persistent bottom audio player */}
