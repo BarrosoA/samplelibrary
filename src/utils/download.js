@@ -53,17 +53,19 @@ async function fetchMaster(track) {
 
 const isLocalhost = () => ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 
-// best-effort ping to the download counter that lives next to the media; never holds up the download
+// best-effort ping to the download counter; never holds up the download.
+// it goes to this site (vercel.json forwards it to cloudflare) because blockers like brave drop cross-site pings
 function countDownload(tracks, packId) {
-  const withMaster = tracks.filter(hasMaster);
-  if (withMaster.length === 0 || isLocalhost() || !navigator.sendBeacon) return;
-  try {
-    const origin = new URL(withMaster[0].master.parts[0]).origin;
-    const ids = withMaster.map((t) => t.id);
-    navigator.sendBeacon(`${origin}/api/hit`, JSON.stringify(packId ? { pack: packId, tracks: ids } : { tracks: ids }));
-  } catch {
+  const ids = tracks.filter(hasMaster).map((t) => t.id);
+  if (ids.length === 0 || isLocalhost()) return;
+  fetch('/api/downloaded', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(packId ? { pack: packId, tracks: ids } : { tracks: ids }),
+    keepalive: true,
+  }).catch(() => {
     // counting is optional
-  }
+  });
 }
 
 // resolves once the browser has the download (worker path) or the file is saved (fallback path)

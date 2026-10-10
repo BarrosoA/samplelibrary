@@ -2,9 +2,12 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/downloaded",
+      "destination": "https://musicportfolio-3na.pages.dev/api/hit"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
 }
-
