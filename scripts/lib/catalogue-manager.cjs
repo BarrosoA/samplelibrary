@@ -406,6 +406,22 @@ function updatePack(packId, updates = {}) {
   return { success: true, pack };
 }
 
+function updateTrack(packId, trackId, updates = {}) {
+  const data = loadCatalogue();
+  const pack = (data.packs || []).find((p) => p.id === packId);
+  if (!pack) throw new Error(`pack ${packId} not found`);
+  const track = (pack.tracks || []).find((t) => t.id === trackId);
+  if (!track) throw new Error(`sample ${trackId} not found`);
+
+  if (typeof updates.title === 'string') {
+    const trimmed = updates.title.trim();
+    if (trimmed) track.title = trimmed;
+  }
+
+  saveCatalogue(data);
+  return { success: true, track };
+}
+
 function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
   const data = loadCatalogue();
   data.packs = data.packs || [];
@@ -524,6 +540,7 @@ module.exports = {
   reorderPacks,
   deletePack,
   updatePack,
+  updateTrack,
   createBlankPack,
   updatePackCover,
   addTracksToPack,

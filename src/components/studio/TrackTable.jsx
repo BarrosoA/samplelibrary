@@ -3,8 +3,21 @@ import { Trash2, Play, Pause, Loader2 } from 'lucide-react';
 import { setDragPill } from './studioUtils';
 
 // samples in a pack: drag rows to reorder, or onto a sidebar pack to move them
-export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete }) {
+export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete, onRename }) {
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [titleValue, setTitleValue] = useState('');
+
+  const startRename = (track) => {
+    setEditingId(track.id);
+    setTitleValue(track.title || '');
+  };
+
+  const saveRename = (track) => {
+    setEditingId(null);
+    const trimmed = titleValue.trim();
+    if (trimmed && trimmed !== track.title) onRename(track, trimmed);
+  };
 
   const handleDragStart = (e, track) => {
     onDragTrack(track);
@@ -58,13 +71,14 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
         const isPlaying = !isPending && player.playingId === track.id;
         const isDragging = !isPending && draggedTrack?.id === track.id;
         const isDragOver = !isPending && dragOverTrackId === track.id;
+        const isEditing = !isPending && editingId === track.id;
         const dl = downloads && (downloads.tracks[track.id] || { single: 0, inPack: 0 });
 
         return (
           <div
             key={track.id}
             className={`studio-table-row ${isPending ? 'is-pending' : ''} ${isPlaying ? 'playing' : ''} ${isDragging ? 'is-dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-            draggable={!isPending}
+            draggable={!isPending && !isEditing}
             onDragStart={(e) => !isPending && handleDragStart(e, track)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => !isPending && handleDragOver(e, track.id)}
@@ -87,7 +101,28 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
             </div>
 
             <div className="st-col-title">
-              <span className="st-track-title">{track.title}</span>
+              {isEditing ? (
+                <input
+                  className="st-track-title-input"
+                  value={titleValue}
+                  autoFocus
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={() => saveRename(track)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.target.blur();
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                />
+              ) : (
+                <span
+                  className={`st-track-title ${isPending ? '' : 'is-editable'}`}
+                  onClick={() => !isPending && startRename(track)}
+                  title={isPending ? undefined : 'Click to rename'}
+                >
+                  {track.title}
+                </span>
+              )}
               <span className="st-track-id">{isPending ? 'processing & uploading...' : track.id}</span>
             </div>
 

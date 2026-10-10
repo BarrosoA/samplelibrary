@@ -14,6 +14,7 @@ const ROUTES = {
   '/delete-pack': (p) => manager.deletePack(p.packId),
   '/reorder-packs': (p) => manager.reorderPacks(p.packIds),
   '/delete-track': (p) => manager.deleteTrack(p.packId, p.trackId),
+  '/update-track': (p) => manager.updateTrack(p.packId, p.trackId, p.updates),
   '/move-track': (p) => manager.moveTrack(p.sourcePackId, p.targetPackId, p.trackId),
   '/reorder-tracks': (p) => manager.reorderTracks(p.packId, p.trackIds),
   '/import-staging': (p) => manager.importPackFromStaging(p),

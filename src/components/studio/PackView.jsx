@@ -61,6 +61,16 @@ export default function PackView({
     }
   };
 
+  const handleRenameTrack = async (track, title) => {
+    try {
+      await postJson('update-track', { packId: pack.id, trackId: track.id, updates: { title } }, 'Failed to rename sample');
+      notify(`Renamed to "${title}"`);
+      await onChanged();
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
   const handleDeleteTrack = async (track) => {
     if (!window.confirm(`Delete "${track.title}" from ${pack.name}? This unlinks its preview MP3.`)) return;
     try {
@@ -154,6 +164,7 @@ export default function PackView({
             onDragTrack={onDragTrack}
             onReorder={onReorderTracks}
             onDelete={handleDeleteTrack}
+            onRename={handleRenameTrack}
           />
         )}
       </div>
