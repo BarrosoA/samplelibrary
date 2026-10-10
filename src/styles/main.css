@@ -426,8 +426,8 @@ a {
 .track-table-row {
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 4px;
+  /* no dividers; the hover and playing highlights mark the rows */
+  border-radius: 8px;
   font-size: 0.82rem;
   cursor: pointer;
   transition: background-color 0.12s ease;
