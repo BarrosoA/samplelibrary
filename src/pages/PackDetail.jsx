@@ -247,11 +247,11 @@ export default function PackDetail({
                     disabled={Boolean(downloadStates[track.id])}
                   >
                     {downloadStates[track.id] === 'loading' ? (
-                      <Loader2 size={20} className="spin-icon" />
+                      <Loader2 size={18} className="spin-icon" />
                     ) : downloadStates[track.id] === 'done' ? (
-                      <Check size={20} />
+                      <Check size={18} />
                     ) : (
-                      <Download size={20} />
+                      <Download size={18} />
                     )}
                   </button>
                 </div>
