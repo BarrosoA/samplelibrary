@@ -1,6 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
 import { canDownloadTrack, downloadTrack } from '../utils/download';
+
+// mirrored bars from the catalogue's peaks; the played part is the same bars clipped to the progress
+function Waveform({ peaks, percent }) {
+  const clipId = useId();
+  const bars = peaks.map((p, i) => {
+    const h = Math.max(4, p);
+    return <rect key={i} x={i + 0.2} y={(100 - h) / 2} width={0.6} height={h} />;
+  });
+  return (
+    <svg className="waveform" viewBox={`0 0 ${peaks.length} 100`} preserveAspectRatio="none" aria-hidden="true">
+      <clipPath id={clipId}>
+        <rect x="0" y="0" width={(peaks.length * percent) / 100} height="100" />
+      </clipPath>
+      <g className="waveform-rest">{bars}</g>
+      <g className="waveform-played" clipPath={`url(#${clipId})`}>
+        {bars}
+      </g>
+    </svg>
+  );
+}
 
 export default function AudioPlayer({
   currentTrack,
@@ -164,6 +184,7 @@ export default function AudioPlayer({
 
   const totalDuration = duration || currentTrack.duration || 0;
   const shownTime = scrubTime ?? currentTime;
+  const hasWaveform = Array.isArray(currentTrack.peaks) && currentTrack.peaks.length > 0;
   const progressPercent = totalDuration > 0 ? Math.min(100, (shownTime / totalDuration) * 100) : 0;
 
   return (
@@ -224,7 +245,7 @@ export default function AudioPlayer({
           <div className="timeline-container">
             <span className="time-label">{formatTime(shownTime)}</span>
             <div
-              className={`progress-bar-wrap ${scrubTime !== null ? 'is-scrubbing' : ''}`}
+              className={`progress-bar-wrap ${hasWaveform ? 'has-waveform' : ''} ${scrubTime !== null ? 'is-scrubbing' : ''}`}
               ref={progressBarRef}
               onPointerDown={handleScrubStart}
               onPointerMove={handleScrubMove}
@@ -236,8 +257,14 @@ export default function AudioPlayer({
               aria-valuemax={Math.round(totalDuration)}
               aria-valuenow={Math.round(shownTime)}
             >
-              <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
-              <div className="progress-thumb" style={{ left: `${progressPercent}%` }} />
+              {hasWaveform ? (
+                <Waveform peaks={currentTrack.peaks} percent={progressPercent} />
+              ) : (
+                <>
+                  <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+                  <div className="progress-thumb" style={{ left: `${progressPercent}%` }} />
+                </>
+              )}
             </div>
             <span className="time-label right">{formatTime(totalDuration)}</span>
           </div>

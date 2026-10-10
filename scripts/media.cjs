@@ -95,16 +95,37 @@ function adopt() {
   console.log(`\n${adopted.length} stored copies removed, ${kept.length} kept.`);
 }
 
+// adds player waveforms to samples added before waveforms existed, from their local preview copy
+function peaks() {
+  const data = manager.loadCatalogue();
+  const { deploy } = media.ensureMediaDir();
+  let added = 0;
+  for (const track of (data.packs || []).flatMap((p) => p.tracks || [])) {
+    if (Array.isArray(track.peaks) && track.peaks.length) continue;
+    const rel = media.relPathFromUrl(track.previewUrl);
+    const file = rel && path.join(deploy, rel);
+    if (!file || !fs.existsSync(file)) {
+      console.log(`  no local preview for "${track.title}", skipped`);
+      continue;
+    }
+    track.peaks = manager.computePeaks(file);
+    if (track.peaks) added += 1;
+  }
+  manager.saveCatalogue(data);
+  console.log(`Added waveforms to ${added} sample(s).`);
+}
+
 const commands = {
   migrate,
   rebase,
   adopt,
+  peaks,
   deploy: () => console.log(media.deploy({ catalogue: manager.loadCatalogue(), force: process.argv.includes('--force') }).message),
 };
 
 const cmd = commands[process.argv[2]];
 if (!cmd) {
-  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase|adopt> [--force]');
+  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase|adopt|peaks> [--force]');
   process.exit(1);
 }
 Promise.resolve()

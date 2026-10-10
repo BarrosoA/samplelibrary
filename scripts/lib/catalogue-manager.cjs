@@ -19,7 +19,8 @@ function saveCatalogue(data) {
       p.trackCount = p.tracks ? p.tracks.length : 0;
     });
   }
-  const formatted = JSON.stringify(data, null, 2) + '\n';
+  // waveforms on one line each instead of 160
+  const formatted = JSON.stringify(data, null, 2).replace(/"peaks": \[[\d,\s]*\]/g, (m) => m.replace(/\s+/g, '').replace(':', ': ')) + '\n';
   fs.writeFileSync(PUBLIC_TRACKS_PATH, formatted, 'utf8');
   fs.writeFileSync(SRC_TRACKS_PATH, formatted, 'utf8');
   return data;
@@ -197,6 +198,34 @@ function encodePreviewAudio(inputFilePath) {
   }
 }
 
+const PEAK_COUNT = 160;
+
+// waveform for the player: PEAK_COUNT bar heights from 0 to 100, loudest bar = 100
+function computePeaks(audioPath) {
+  try {
+    // mono 16-bit at a low rate is plenty for bar heights and keeps a long file to a few MB
+    const raw = execSync(`ffmpeg -v error -i "${audioPath}" -ac 1 -ar 4000 -f s16le -`, {
+      maxBuffer: 256 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const samples = new Int16Array(raw.buffer, raw.byteOffset, Math.floor(raw.length / 2));
+    if (samples.length === 0) return null;
+
+    const peaks = [];
+    const size = samples.length / PEAK_COUNT;
+    for (let i = 0; i < PEAK_COUNT; i++) {
+      let max = 0;
+      for (let j = Math.floor(i * size); j < Math.floor((i + 1) * size); j++) max = Math.max(max, Math.abs(samples[j]));
+      peaks.push(max);
+    }
+    const loudest = Math.max(...peaks) || 1;
+    return peaks.map((p) => Math.round((p / loudest) * 100));
+  } catch (err) {
+    console.warn(`[peaks] skipped ${path.basename(audioPath)}: ${err.message.split('\n')[0]}`);
+    return null;
+  }
+}
+
 function buildTrack({ id, audioPath, originalName, sourcePath }) {
   const meta = parseAudioMetadataFromFilename(originalName);
   return {
@@ -206,6 +235,7 @@ function buildTrack({ id, audioPath, originalName, sourcePath }) {
     key: meta.key,
     instrument: 'Master Sample',
     duration: probeDuration(audioPath),
+    peaks: computePeaks(audioPath),
     previewUrl: encodePreviewAudio(audioPath),
     master: media.addMaster(audioPath, originalName, sourcePath),
     format: (path.extname(originalName).replace('.', '') || 'WAV').toUpperCase(),
@@ -312,8 +342,9 @@ function updateTrackFromFile(filePath) {
   const previewUrl = encodePreviewAudio(source);
   const master = media.addMaster(source, path.basename(source), source);
   const duration = probeDuration(source);
+  const peaks = computePeaks(source);
   const before = targets.map((t) => ({ ...t }));
-  targets.forEach((t) => Object.assign(t, { previewUrl, master, duration }));
+  targets.forEach((t) => Object.assign(t, { previewUrl, master, duration, peaks }));
   saveCatalogue(data);
   media.retireTracks(before, data);
   return { success: true, updated: targets.map((t) => t.title) };
@@ -552,6 +583,7 @@ module.exports = {
   resolveLoopFile,
   parseAudioMetadataFromFilename,
   probeDuration,
+  computePeaks,
   encodePreviewAudio,
   publishToGit,
 };

@@ -1955,6 +1955,11 @@ a {
     position: absolute;
     inset: -12px 0;
   }
+  .progress-bar-wrap.has-waveform,
+  .progress-bar-wrap.has-waveform:hover,
+  .progress-bar-wrap.has-waveform.is-scrubbing {
+    height: 22px;
+  }
   .studio-fab {
     right: 16px;
   }
@@ -2237,6 +2242,34 @@ a {
 
 .progress-bar-wrap.is-scrubbing {
   height: 5px;
+}
+
+/* waveform replaces the thin bar when the sample has peaks */
+.progress-bar-wrap.has-waveform,
+.progress-bar-wrap.has-waveform:hover,
+.progress-bar-wrap.has-waveform.is-scrubbing {
+  height: 28px;
+  background: none;
+  border-radius: 0;
+}
+
+.waveform {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.waveform-rest {
+  fill: #3a3a3a;
+  transition: fill 0.15s ease;
+}
+
+.progress-bar-wrap.has-waveform:hover .waveform-rest {
+  fill: #4a4a4a;
+}
+
+.waveform-played {
+  fill: #ffffff;
 }
 
 @media (hover: none) {
