@@ -43,16 +43,47 @@ export default function AudioPlayer({
     }
   };
 
-  useEffect(() => {
-    if (!audioRef.current || !currentTrack) return;
-    audioRef.current.src = currentTrack.previewUrl;
-    audioRef.current.load();
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
 
-    if (isPlaying) {
-      audioRef.current.play().catch((err) => {
-        console.warn('Playback error:', err);
-      });
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+    let cancelled = false;
+    let objectUrl = null;
+
+    const start = (src) => {
+      audio.src = src;
+      audio.load();
+      if (isPlayingRef.current) {
+        audio.play().catch((err) => {
+          console.warn('Playback error:', err);
+        });
+      }
+    };
+
+    // cloudflare ignores Range requests, so without the service worker (first visit, hard reload) the
+    // browser can't find the length or seek; a fully downloaded copy can do both
+    if (navigator.serviceWorker?.controller) {
+      start(currentTrack.previewUrl);
+    } else {
+      fetch(currentTrack.previewUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(blob);
+          start(objectUrl);
+        })
+        .catch(() => !cancelled && start(currentTrack.previewUrl));
     }
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [currentTrack]);
 
   useEffect(() => {
@@ -83,7 +114,9 @@ export default function AudioPlayer({
 
   const handleLoadedMetadata = () => {
     if (!audioRef.current) return;
-    setDuration(audioRef.current.duration || currentTrack?.duration || 0);
+    // streams the browser can't measure report Infinity
+    const measured = audioRef.current.duration;
+    setDuration(Number.isFinite(measured) && measured > 0 ? measured : currentTrack?.duration || 0);
   };
 
   const [scrubTime, setScrubTime] = useState(null);
@@ -121,7 +154,7 @@ export default function AudioPlayer({
   };
 
   const formatTime = (sec) => {
-    if (!sec || isNaN(sec)) return '0:00';
+    if (!Number.isFinite(sec) || sec <= 0) return '0:00';
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
