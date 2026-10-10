@@ -810,15 +810,12 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
   margin-left: 4px;
-  padding: 0;
-  border-radius: 50%;
+  padding: 4px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #ededed;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  border: none;
+  color: #bdbdbd;
+  transition: color 0.15s ease;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -826,9 +823,7 @@ a {
 .player-download-btn:hover,
 .player-download-btn.is-loading,
 .player-download-btn.is-done {
-  background: #ffffff;
-  border-color: #ffffff;
-  color: #0f0f0f;
+  color: #ffffff;
 }
 
 .player-download-btn:disabled {
@@ -1938,10 +1933,6 @@ a {
   .player-right {
     grid-area: tools;
     gap: 4px;
-  }
-  .player-download-btn {
-    width: 34px;
-    height: 34px;
   }
   .volume-container {
     display: none; /* phones use their volume buttons; iOS ignores the slider */

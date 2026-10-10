@@ -326,11 +326,11 @@ export default function AudioPlayer({
             disabled={downloadState !== 'idle'}
           >
             {downloadState === 'loading' ? (
-              <Loader2 size={14} className="spin-icon" />
+              <Loader2 size={20} className="spin-icon" />
             ) : downloadState === 'done' ? (
-              <Check size={14} />
+              <Check size={20} />
             ) : (
-              <Download size={14} />
+              <Download size={20} />
             )}
           </button>
         </div>
