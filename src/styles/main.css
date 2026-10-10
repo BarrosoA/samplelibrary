@@ -250,6 +250,48 @@ a {
 .detail-nav {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+/* small light/dark-style switch: cover background vs a faint colour glow */
+.backdrop-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 46px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.backdrop-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.backdrop-toggle.is-minimal .backdrop-toggle-knob {
+  transform: translateX(22px);
+}
+
+.backdrop-toggle-icon {
+  position: relative; /* above the knob */
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.backdrop-toggle.is-textured .backdrop-toggle-icon.is-textured,
+.backdrop-toggle.is-minimal .backdrop-toggle-icon.is-minimal {
+  color: #0a0a0a;
 }
 
 /* a bare arrow with a 36px hit area; the negative margin lines the arrow up with the cover's edge */
@@ -1900,6 +1942,9 @@ a {
     gap: 6px 16px;
     padding: 0;
   }
+  .backdrop-toggle {
+    display: none; /* phones always use the cover background */
+  }
   .album-hero-cover-wrap {
     grid-area: cover;
     align-self: start;
@@ -2191,6 +2236,24 @@ a {
   pointer-events: none;
   z-index: 0;
   /* no top-to-bottom fade: at this faintness its few shades show up as visible bands */
+}
+
+/* minimal: only a faint glow of the cover's colour at the top (desktop; phones keep the cover) */
+@media (min-width: 641px) {
+  .pack-glow.is-minimal {
+    position: absolute;
+    inset: auto;
+    top: calc(-1 * var(--page-top)); /* reaches the top of the window */
+    left: 50%;
+    width: 100vw;
+    height: 460px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse 70% 100% at 50% 0%, rgba(var(--glow-rgb, 0, 0, 0), 0.22), transparent 75%);
+  }
+
+  .pack-glow.is-minimal::before {
+    display: none;
+  }
 }
 
 /* the cover itself, blurred into soft colour; scaled up so the blur has no hard edges */

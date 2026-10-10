@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Play, Download, FolderArchive, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Play, Download, FolderArchive, Loader2, Check, Image, Droplet } from 'lucide-react';
 import PauseIcon from '../components/PauseIcon';
 import { canDownloadTrack, downloadPack, downloadTrack } from '../utils/download';
 import { getCoverColor } from '../utils/coverColor';
 import FadeImage from '../components/FadeImage';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// desktop-only choice between the blurred cover and a faint colour glow; phones always get the cover
+const BACKDROP_KEY = 'pack-backdrop';
+const readBackdrop = () => {
+  try {
+    return localStorage.getItem(BACKDROP_KEY) === 'minimal' ? 'minimal' : 'textured';
+  } catch {
+    return 'textured';
+  }
+};
 
 export default function PackDetail({
   pack,
@@ -20,6 +30,17 @@ export default function PackDetail({
   const [downloadStates, setDownloadStates] = useState({});
   const [downloadAllState, setDownloadAllState] = useState('idle');
   const [glowColor, setGlowColor] = useState(null);
+  const [backdrop, setBackdrop] = useState(readBackdrop);
+
+  const toggleBackdrop = () => {
+    const next = backdrop === 'textured' ? 'minimal' : 'textured';
+    setBackdrop(next);
+    try {
+      localStorage.setItem(BACKDROP_KEY, next);
+    } catch {
+      // private mode: the choice just isn't remembered
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -90,8 +111,11 @@ export default function PackDetail({
   return (
     <div className="pack-detail-page">
       <div
-        className={`pack-glow ${glowColor ? 'is-visible' : ''}`}
-        style={pack.cover ? { '--glow-cover': `url(${JSON.stringify(pack.cover)})` } : undefined}
+        className={`pack-glow is-${backdrop} ${glowColor ? 'is-visible' : ''}`}
+        style={{
+          ...(pack.cover && { '--glow-cover': `url(${JSON.stringify(pack.cover)})` }),
+          ...(glowColor && { '--glow-rgb': glowColor.join(', ') }),
+        }}
         aria-hidden="true"
       />
 
@@ -99,6 +123,20 @@ export default function PackDetail({
       <nav className="detail-nav">
         <button className="back-btn" onClick={onBack} title="Back to all packs" aria-label="Back to all packs">
           <ArrowLeft size={20} />
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={backdrop === 'minimal'}
+          className={`backdrop-toggle is-${backdrop}`}
+          onClick={toggleBackdrop}
+          title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the cover background'}
+          aria-label="Minimal background"
+        >
+          <span className="backdrop-toggle-knob" aria-hidden="true" />
+          <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
+          <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
         </button>
       </nav>
 
