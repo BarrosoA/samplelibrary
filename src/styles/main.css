@@ -156,7 +156,7 @@ a {
 /* Grid of Packs */
 .packs-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 160px));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px 16px;
 }
 
@@ -1815,7 +1815,7 @@ a {
 
 @media (max-width: 768px) {
   .packs-grid {
-    grid-template-columns: repeat(3, minmax(0, 160px));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px 12px;
   }
   .album-hero {
