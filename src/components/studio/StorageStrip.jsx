@@ -28,12 +28,10 @@ function DownloadsStat({ downloads }) {
   if (!downloads.live) return <Stat label="DOWNLOADS" value="-" sub="starts after next publish" />;
 
   const samples = Object.values(downloads.tracks).reduce((sum, t) => sum + t.single + t.inPack, 0);
-  const zips = Object.values(downloads.packs).reduce((sum, n) => sum + n, 0);
   return (
     <Stat
       label="DOWNLOADS"
       value={samples.toLocaleString()}
-      sub={`samples · ${zips.toLocaleString()} pack zip${zips === 1 ? '' : 's'}`}
       title="Counted by the site since the counter went live. Ad blockers can hide some downloads, and repeat downloads count again."
     />
   );
@@ -53,7 +51,7 @@ export default function StorageStrip({ storage, downloads }) {
         sub={
           storage.live && storage.afterPublish.samples !== shown.samples
             ? `${storage.afterPublish.samples.toLocaleString()} after publish`
-            : 'preview + WAV count as 1'
+            : null
         }
         title="Samples stored on Cloudflare. Each sample's preview and WAV count once."
       />
@@ -73,7 +71,6 @@ export default function StorageStrip({ storage, downloads }) {
       <Stat
         label="SNAPSHOTS KEPT"
         value={`Last ${storage.keepCount}`}
-        sub={`+ anything under ${storage.keepDays} days`}
         title="Older Cloudflare deployments are deleted after each publish. Change with CF_KEEP_DEPLOYMENTS and CF_KEEP_DAYS in .env.local."
       />
 
