@@ -9,7 +9,7 @@ const api = async (token, method, body) => {
     body: JSON.stringify(body || {}),
   });
   const data = await res.json().catch(() => ({}));
-  if (data.error_code === 401) throw new Error('Telegram rejected the token. Copy it again from BotFather, or send /token there to see it.');
+  if (data.error_code === 401) throw new Error('Telegram rejected the token. Copy it again from BotFather (/mybots, pick your bot, then API Token).');
   if (!data.ok) throw new Error(data.description || `Telegram answered HTTP ${res.status}`);
   return data.result;
 };
