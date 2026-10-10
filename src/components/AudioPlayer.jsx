@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
+import { Play, Repeat, Volume2, VolumeX, Download, SkipBack, SkipForward, Loader2, Check } from 'lucide-react';
+import PauseIcon from './PauseIcon';
 import { canDownloadTrack, downloadTrack } from '../utils/download';
 
 // mirrored bars from the catalogue's peaks; bars up to the playhead turn white.
@@ -222,7 +223,7 @@ export default function AudioPlayer({
               onClick={() => onPlayPause(currentTrack, currentPack)}
               title={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
+              {isPlaying ? <PauseIcon size={14} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
             </button>
 
             <button className="ctrl-btn" onClick={onNext} title="Next">

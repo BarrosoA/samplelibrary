@@ -1,5 +1,6 @@
 import React from 'react';
-import { Play, Pause, AlertCircle, Loader2, Inbox, RefreshCw, X } from 'lucide-react';
+import { Play, AlertCircle, Loader2, Inbox, RefreshCw, X } from 'lucide-react';
+import PauseIcon from '../PauseIcon';
 import { inboxAudioUrl, setDragPill } from './studioUtils';
 
 export default function NewLoopsPanel({ items, busy, player, draggedLoop, onDragLoop, onUpdate, onDismiss }) {
@@ -64,7 +65,7 @@ export default function NewLoopsPanel({ items, busy, player, draggedLoop, onDrag
                       onClick={() => player.toggle(item.path, inboxAudioUrl(item.path))}
                       title={isPlaying ? 'Pause' : 'Listen'}
                     >
-                      {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                      {isPlaying ? <PauseIcon size={12} /> : <Play size={12} />}
                     </button>
                   )}
                 </div>

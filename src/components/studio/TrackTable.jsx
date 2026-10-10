@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Trash2, Play, Pause, Loader2 } from 'lucide-react';
+import { Trash2, Play, Loader2 } from 'lucide-react';
+import PauseIcon from '../PauseIcon';
 import { setDragPill } from './studioUtils';
 
 // samples in a pack: drag rows to reorder, or onto a sidebar pack to move them
@@ -95,7 +96,7 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
                   onClick={() => player.toggle(track.id, track.previewUrl)}
                   title={isPlaying ? 'Pause' : 'Audition preview'}
                 >
-                  {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                  {isPlaying ? <PauseIcon size={12} /> : <Play size={12} />}
                 </button>
               )}
             </div>

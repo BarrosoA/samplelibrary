@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Play, Pause, Download, FolderArchive, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Play, Download, FolderArchive, Loader2, Check } from 'lucide-react';
+import PauseIcon from '../components/PauseIcon';
 import { canDownloadTrack, downloadPack, downloadTrack } from '../utils/download';
 import { getCoverColor } from '../utils/coverColor';
 import FadeImage from '../components/FadeImage';
@@ -122,7 +123,7 @@ export default function PackDetail({
               title={isCurrentPackPlaying ? 'Pause preview' : 'Play preview'}
             >
               <span className="btn-icon-wrap">
-                {isCurrentPackPlaying ? <Pause size={15} /> : <Play size={15} />}
+                {isCurrentPackPlaying ? <PauseIcon size={14} /> : <Play size={15} />}
               </span>
               <span>PREVIEW</span>
             </button>
@@ -193,7 +194,7 @@ export default function PackDetail({
                           <i />
                           <i />
                         </span>
-                        <Pause size={13} className="row-pause-icon" />
+                        <PauseIcon size={12} className="row-pause-icon" />
                       </>
                     ) : (
                       <Play size={13} style={{ marginLeft: '1px' }} />
