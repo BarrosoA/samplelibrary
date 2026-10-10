@@ -43,6 +43,7 @@ function dirs() {
     state: path.join(mediaRoot, 'last-deploy.json'),
     sources: path.join(mediaRoot, 'sources.json'),
     inbox: path.join(mediaRoot, 'inbox.json'),
+    telegram: path.join(mediaRoot, 'telegram.json'),
   };
 }
 
@@ -243,6 +244,16 @@ function retireTracks(removedTracks, catalogue) {
   if (changed) writeJson(d.sources, sources);
 }
 
+// the download counter only accepts ids listed here and uses the names in its telegram messages
+function counterNames(catalogue) {
+  const names = { tracks: {}, packs: {} };
+  for (const p of catalogue.packs || []) {
+    names.packs[p.id] = p.name;
+    for (const t of p.tracks || []) names.tracks[t.id] = t.title;
+  }
+  return names;
+}
+
 function catalogueMasters(catalogue) {
   const masters = new Map();
   (catalogue.packs || []).forEach((p) =>
@@ -328,6 +339,8 @@ function buildStaging(catalogue) {
   mirror(d.deploy, d.staging);
   for (const m of resolved) writeParts(m.path, m.key, m.size, path.join(d.staging, 'm'));
   fs.copyFileSync(COUNTER_SOURCE, path.join(d.staging, '_worker.js'));
+  fs.mkdirSync(path.join(d.staging, 'meta'), { recursive: true });
+  writeJson(path.join(d.staging, 'meta/names.json'), counterNames(catalogue));
   writeJson(path.join(d.staging, '_routes.json'), { version: 1, include: ['/api/*'], exclude: [] });
   return d.staging;
 }
@@ -439,6 +452,9 @@ function deploySnapshot(catalogue) {
     ...listDeployFiles(d.deploy),
     ...catalogueMasters(catalogue).map((m) => `master:${m.key}:${m.size}`),
     `counter:${hashFile(COUNTER_SOURCE)}`,
+    `counter:names:${crypto.createHash('sha256').update(JSON.stringify(counterNames(catalogue))).digest('hex').slice(0, 24)}`,
+    // pages secrets only reach the counter on the next deployment
+    ...(fs.existsSync(d.telegram) ? [`counter:telegram:${fs.statSync(d.telegram).mtimeMs}`] : []),
   ].sort();
 }
 
@@ -539,8 +555,25 @@ function ensureCounterDb() {
     db = find();
     if (!db) throw new Error(`Created the "${name}" database on Cloudflare but could not find it afterwards.`);
   }
-  wrangler(`d1 execute ${name} --remote --command "CREATE TABLE IF NOT EXISTS counts (key TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)"`);
+  wrangler(
+    `d1 execute ${name} --remote --command "CREATE TABLE IF NOT EXISTS counts (key TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS notify_log (hour TEXT PRIMARY KEY, sent INTEGER NOT NULL DEFAULT 0)"`
+  );
   return { name, id: db.uuid };
+}
+
+// value goes in through stdin so it never shows up in a command line or a file
+function setPagesSecret(name, value) {
+  const { projectName } = loadEnvConfig();
+  execSync(`node "${WRANGLER_BIN}" pages secret put ${name} --project-name=${projectName}`, {
+    ...wranglerOptions(PROJECT_ROOT),
+    input: value,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+}
+
+// remembers that telegram is set up (never the token), which makes the next publish redeploy the counter
+function markTelegramSetUp(chatId) {
+  writeJson(dirs().telegram, { chatId, setUpAt: new Date().toISOString() });
 }
 
 // pages only reads its config from the folder wrangler runs in, so it lives next to the staging folder
@@ -660,5 +693,8 @@ module.exports = {
   pruneDeployments,
   cloudUsage,
   downloadCounts,
+  ensureProject,
+  setPagesSecret,
+  markTelegramSetUp,
   deploy,
 };

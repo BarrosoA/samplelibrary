@@ -8,6 +8,7 @@
     "build": "vite build && node scripts/generate-seo.cjs",
     "preview": "vite preview",
     "manage": "node scripts/manage.cjs",
+    "telegram:setup": "node scripts/telegram-setup.cjs",
     "media:migrate": "node scripts/media.cjs migrate",
     "media:deploy": "node scripts/media.cjs deploy",
     "media:rebase": "node scripts/media.cjs rebase",
