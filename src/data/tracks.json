@@ -1,6 +1,76 @@
 {
   "packs": [
     {
+      "id": "pack-untitled-pack-0834",
+      "name": "TRAP 001",
+      "cover": "/images/custom-pack-untitled-pack-0834-1791603679535.jpg",
+      "trackCount": 3,
+      "description": "",
+      "format": "WAV",
+      "license": "Royalty-Free",
+      "tracks": [
+        {
+          "id": "untitled-pack-0834-1-095",
+          "title": "MORENITA C#PHRYGIAN @noluvmusic",
+          "bpm": 100,
+          "key": "C",
+          "instrument": "Master Sample",
+          "duration": 269.99,
+          "peaks": [91,95,98,98,95,94,91,96,96,98,97,100,98,99,97,99,99,95,97,96,92,89,15,4,2,1,1,1,29,56,57,59,56,63,57,58,30,6,28,66,85,83,83,82,67,75,62,2,1,29,69,74,70,69,72,76,70,59,1,1,71,76,75,75,65,1,1,29,40,41,34,33,1,1,29,9,1,29,75,79,83,77,61,1,28,57,82,89,86,65,1,1,43,46,56,56,54,50,53,51],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/3290661168328899608f0bfd.opus",
+          "master": {
+            "filename": "MORENITA 100 C#PHRYGIAN @noluvmusic.wav",
+            "size": 71438878,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/89e322935663960227edf01c.0",
+              "https://musicportfolio-3na.pages.dev/m/89e322935663960227edf01c.1",
+              "https://musicportfolio-3na.pages.dev/m/89e322935663960227edf01c.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0834-2-474",
+          "title": "RIGHT @noluvmusic",
+          "bpm": 143,
+          "key": "C#m",
+          "instrument": "Master Sample",
+          "duration": 167.83,
+          "peaks": [83,69,94,71,93,69,85,72,91,70,84,71,89,71,92,67,93,65,100,65,94,68,98,66,12,1,0,0,0,0,5,24,66,67,61,54,51,60,60,63,9,1,0,24,63,62,58,60,59,63,59,64,9,1,0,24,84,41,98,36,74,31,82,38,0,0,7,25,0,44,20,47,23,46,19,46,23,1,1,23,27,14,27,22,24,13,26,23,9,1,0,24,23,25,22,25,23,25,23,25],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/2393b26378508ebe9876e52c.opus",
+          "master": {
+            "filename": "RIGHT 143 C#MINOR @noluvmusic.wav",
+            "size": 44408578,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/455a64c0bd2844340c82d8b5.0",
+              "https://musicportfolio-3na.pages.dev/m/455a64c0bd2844340c82d8b5.1"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0834-3-369",
+          "title": "DRACO @noluvmusic",
+          "bpm": 115,
+          "key": "Bm",
+          "instrument": "Master Sample",
+          "duration": 242.09,
+          "peaks": [97,91,93,88,81,94,91,95,89,89,84,80,94,84,89,93,86,87,83,100,82,76,95,75,94,79,88,60,0,0,26,79,70,72,71,73,71,73,1,0,26,62,70,64,66,70,63,75,48,0,26,30,43,42,47,53,49,49,35,1,0,25,88,68,85,80,63,92,42,0,0,27,29,36,40,35,34,34,37,27,1,27,52,60,66,64,68,69,66,54,10,0,25,41,30,39,31,36,36,27],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/e00f7f2b2c1e311cc4069a62.opus",
+          "master": {
+            "filename": "DRACO 115 BMINOR @noluvmusic.wav",
+            "size": 64056394,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/35860ecbb235c296deaeeb01.0",
+              "https://musicportfolio-3na.pages.dev/m/35860ecbb235c296deaeeb01.1",
+              "https://musicportfolio-3na.pages.dev/m/35860ecbb235c296deaeeb01.2"
+            ]
+          },
+          "format": "WAV"
+        }
+      ]
+    },
+    {
       "id": "pack-untitled-pack-0558",
       "name": "Fado Rosa",
       "cover": "/images/custom-pack-untitled-pack-0558-1791529546095.jpg",
