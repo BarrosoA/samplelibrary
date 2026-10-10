@@ -37,8 +37,6 @@ async function notify(env, text) {
   });
 }
 
-const times = (n) => `${n} download${n === 1 ? '' : 's'} total`;
-
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -63,14 +61,11 @@ export default {
     if (ids.length === 0) return reply(400);
 
     const keys = [...(inPack ? [`p:${body.pack}`] : []), ...ids.map((id) => `${inPack ? 'tp' : 't'}:${id}`)];
-    const add = env.DB.prepare('INSERT INTO counts (key, n) VALUES (?1, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1 RETURNING n');
-    const results = await env.DB.batch(keys.map((key) => add.bind(key)));
-    const firstCount = results[0].results[0].n;
+    const add = env.DB.prepare('INSERT INTO counts (key, n) VALUES (?1, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1');
+    await env.DB.batch(keys.map((key) => add.bind(key)));
 
-    const text = inPack
-      ? `📦 Pack downloaded\n${known.packs[body.pack]} (${ids.length} sample${ids.length === 1 ? '' : 's'})\n${times(firstCount)}`
-      : `⬇️ Sample downloaded\n${known.tracks[ids[0]]}\n${times(firstCount)}`;
-    ctx.waitUntil(notify(env, text).catch(() => {}));
+    const name = inPack ? known.packs[body.pack] : known.tracks[ids[0]];
+    ctx.waitUntil(notify(env, `Someone downloaded "${name}"`).catch(() => {}));
     return reply(204);
   },
 };
