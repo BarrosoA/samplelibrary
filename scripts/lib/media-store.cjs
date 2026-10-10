@@ -113,6 +113,14 @@ function relPathFromUrl(url) {
   return url.slice(baseUrl.length + 1);
 }
 
+// the deploy folder's copy of a preview, which exists before it has been published
+function localPreviewFile(url) {
+  const rel = relPathFromUrl(url);
+  if (!rel || !/^p\/[0-9a-f]{24}\.opus$/.test(rel)) return null;
+  const file = path.join(dirs().deploy, rel);
+  return fs.existsSync(file) ? file : null;
+}
+
 function masterKey(master) {
   const rel = master && master.parts && relPathFromUrl(master.parts[0]);
   return rel ? path.basename(rel).split('.')[0] : null;
@@ -683,6 +691,7 @@ module.exports = {
   listLoopFiles,
   retireTracks,
   relPathFromUrl,
+  localPreviewFile,
   checkSources,
   describeProblems,
   adoptKeptMasters,

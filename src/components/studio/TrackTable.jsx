@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Play, Loader2 } from 'lucide-react';
 import PauseIcon from '../PauseIcon';
-import { setDragPill } from './studioUtils';
+import { setDragPill, previewAudioUrl } from './studioUtils';
 
 // samples in a pack: drag rows to reorder, or onto a sidebar pack to move them
 export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete, onRename, onEditMeta }) {
@@ -121,7 +121,7 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
               ) : (
                 <button
                   className="st-btn-audition"
-                  onClick={() => player.toggle(track.id, track.previewUrl)}
+                  onClick={() => player.toggle(track.id, previewAudioUrl(track.previewUrl))}
                   title={isPlaying ? 'Pause' : 'Audition preview'}
                 >
                   {isPlaying ? <PauseIcon size={12} /> : <Play size={12} />}

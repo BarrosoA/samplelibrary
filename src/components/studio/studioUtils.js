@@ -1,6 +1,7 @@
 export const NEW_LOOPS_ID = '__new_loops__';
 
 export const inboxAudioUrl = (filePath) => `/api/manage/inbox-audio?path=${encodeURIComponent(filePath)}`;
+export const previewAudioUrl = (url) => `/api/manage/preview-audio?url=${encodeURIComponent(url)}`;
 
 async function readResponse(res, fallbackError) {
   const data = await res.json().catch(() => ({}));

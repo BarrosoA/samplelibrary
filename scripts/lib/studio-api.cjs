@@ -5,7 +5,7 @@ const media = require('./media-store.cjs');
 const formidablePkg = require('formidable');
 const formidable = typeof formidablePkg === 'function' ? formidablePkg : (formidablePkg.formidable || formidablePkg.default);
 
-const AUDIO_TYPES = { '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio/aiff', '.flac': 'audio/flac' };
+const AUDIO_TYPES = { '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio/aiff', '.flac': 'audio/flac', '.opus': 'audio/ogg' };
 
 // json endpoints: each receives the parsed request body
 const ROUTES = {
@@ -93,6 +93,20 @@ function serveLoopAudio(req, res) {
   }
 }
 
+// plays the local copy so samples can be auditioned before they are published, otherwise the live file
+function servePreviewAudio(req, res) {
+  const url = new URL(req.url, 'http://localhost').searchParams.get('url');
+  const file = media.localPreviewFile(url);
+  if (file) return sendFileWithRanges(req, res, file);
+  if (!media.relPathFromUrl(url)) {
+    res.statusCode = 404;
+    return res.end('Not a preview from the media store');
+  }
+  res.statusCode = 302;
+  res.setHeader('Location', url);
+  res.end();
+}
+
 function handleUpload(req, res, handler) {
   const form = formidable({ multiples: true });
   form.parse(req, async (err, fields, files) => {
@@ -131,14 +145,14 @@ function handleJson(req, res, handler) {
 
 // connect middleware for /api/manage, used by Studio Manager in the vite dev server
 function studioApi(req, res, next) {
-  const isAudio = req.method === 'GET' && req.url.startsWith('/inbox-audio?');
+  const isAudio = req.method === 'GET' && (req.url.startsWith('/inbox-audio?') || req.url.startsWith('/preview-audio?'));
   if (req.method !== 'POST' && !isAudio) return next();
 
   if (!isFromThisComputer(req)) {
     return sendJson(res, 403, { error: 'Studio Manager only accepts requests from this computer' });
   }
 
-  if (isAudio) return serveLoopAudio(req, res);
+  if (isAudio) return req.url.startsWith('/preview-audio?') ? servePreviewAudio(req, res) : serveLoopAudio(req, res);
   if (UPLOAD_ROUTES[req.url]) return handleUpload(req, res, UPLOAD_ROUTES[req.url]);
   if (ROUTES[req.url]) return handleJson(req, res, ROUTES[req.url]);
   sendJson(res, 404, { error: 'Endpoint not found' });

@@ -4,7 +4,7 @@
       "id": "pack-untitled-pack-7215",
       "name": "REGGAETON 001",
       "cover": "/images/custom-pack-untitled-pack-7215-1791612599758.jpg",
-      "trackCount": 4,
+      "trackCount": 12,
       "description": "Synths and textures for reggaeton, melodic.",
       "format": "WAV",
       "license": "Royalty-Free",
@@ -86,6 +86,166 @@
             ]
           },
           "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-5-223",
+          "title": "lost in troubled mind - @noluvmusic 32bit 44.khz",
+          "bpm": 95,
+          "key": "A",
+          "instrument": "Master Sample",
+          "duration": 202.11,
+          "peaks": [83,90,85,90,94,85,100,83,93,95,83,93,85,85,96,82,99,86,84,96,74,78,77,76,78,71,86,69,75,70,72,79,77,77,79,71,87,69,75,69,23,2,0,0,0,72,79,77,77,78,71,87,69,75,69,23,2,0,0,0,57,56,43,45,53,14,1,0,0,0,22,53,48,52,62,26,3,0,0,0,49,52,53,63,65,49,51,52,63,65,23,47,35,5,51,11,52,55,9,65],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/9ef026f80abeb0f057b83a56.opus",
+          "master": {
+            "filename": "lost in a troubled mind - 95 E @noluvmusic 32bit 44.khz.wav",
+            "size": 71302918,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/c63ce77c2cee89d29b61b2f4.0",
+              "https://musicportfolio-3na.pages.dev/m/c63ce77c2cee89d29b61b2f4.1",
+              "https://musicportfolio-3na.pages.dev/m/c63ce77c2cee89d29b61b2f4.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-6-084",
+          "title": "una valsa - @noluvmusic 24bit 44.1kHz",
+          "bpm": 91,
+          "key": "Am",
+          "instrument": "Master Sample",
+          "duration": 221.54,
+          "peaks": [69,74,79,73,88,80,89,84,84,86,84,90,84,95,100,85,96,89,92,71,72,74,67,75,69,70,74,70,72,75,80,80,82,82,75,82,79,82,45,3,2,1,43,66,73,72,69,76,69,71,70,71,54,1,1,1,1,77,66,76,64,67,64,81,81,66,55,1,1,1,1,14,14,16,16,15,15,15,15,16,15,3,2,1,1,30,46,51,67,65,54,1,1,1,1,46,47,50,58,58],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/1de17570728a7479fa904a99.opus",
+          "master": {
+            "filename": "una valsa - 91 Am @noluvmusic 24bit 44.1kHz.wav",
+            "size": 58619260,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/4f55c86b0dcea410c66b0b67.0",
+              "https://musicportfolio-3na.pages.dev/m/4f55c86b0dcea410c66b0b67.1",
+              "https://musicportfolio-3na.pages.dev/m/4f55c86b0dcea410c66b0b67.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-7-214",
+          "title": "luv812 @noluvmusic",
+          "bpm": 97,
+          "key": "A#m",
+          "instrument": "Master Sample",
+          "duration": 215.41,
+          "peaks": [82,76,72,81,77,81,86,80,97,95,73,77,78,78,70,80,83,85,61,16,30,4,19,76,75,72,72,58,4,30,1,0,53,54,55,52,53,22,11,30,2,48,63,44,64,49,58,60,47,72,62,52,41,49,43,45,53,40,57,57,2,0,0,0,0,0,30,0,36,75,71,73,67,70,64,65,77,64,37,0,30,0,17,36,37,40,40,36,40,37,28,34,10,4,30,44,100,17,5,2],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/5acf7a9baa5afcb74c15cb9d.opus",
+          "master": {
+            "filename": "luv812 97 A#minor @noluvmusic.wav",
+            "size": 56996590,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/f9300ef2101700b6aaa3f915.0",
+              "https://musicportfolio-3na.pages.dev/m/f9300ef2101700b6aaa3f915.1",
+              "https://musicportfolio-3na.pages.dev/m/f9300ef2101700b6aaa3f915.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-8-774",
+          "title": "naquela praia - @noluvmusic 24bit 44.1kHz",
+          "bpm": 92,
+          "key": "Em",
+          "instrument": "Master Sample",
+          "duration": 240,
+          "peaks": [71,74,69,81,83,82,82,92,100,97,98,91,100,73,69,70,69,71,72,68,69,64,12,0,0,0,83,83,75,87,68,8,1,0,51,76,89,75,89,38,5,1,0,0,0,0,0,0,0,0,0,0,59,66,67,68,55,2,0,0,23,46,49,46,43,32,1,0,0,38,48,47,42,40,6,0,0,0,10,12,12,10,10,12,12,9,11,11,11,12,10,11,13,11,10,12,11,12,11,10],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/d638b302e1d2133d47666aca.opus",
+          "master": {
+            "filename": "naquela praia - 92 Em @noluvmusic 24bit 44.1kHz.wav",
+            "size": 63504184,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/a900ecd5dbd881300a8d570f.0",
+              "https://musicportfolio-3na.pages.dev/m/a900ecd5dbd881300a8d570f.1",
+              "https://musicportfolio-3na.pages.dev/m/a900ecd5dbd881300a8d570f.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-9-574",
+          "title": "bendito @noluvmusic 32bit44.1khz",
+          "bpm": 90,
+          "key": "Ab",
+          "instrument": "Master Sample",
+          "duration": 265.33,
+          "peaks": [95,89,94,100,91,88,95,94,90,82,92,92,100,93,89,94,79,82,85,83,80,84,83,81,49,0,73,0,64,81,71,76,69,79,74,73,53,0,73,0,59,85,73,68,67,82,72,75,54,0,73,0,33,35,35,30,20,0,73,0,29,33,47,34,18,0,73,0,76,84,72,82,76,88,75,83,59,0,73,0,47,60,56,60,62,60,54,59,51,0,77,0,0,0,0,13,48,1,1,1],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/1c44eff8376c33678d665482.opus",
+          "master": {
+            "filename": "bendito 90 Ab @noluvmusic 32bit44.1khz.wav",
+            "size": 93609784,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/15938e717d6c3f2996103895.0",
+              "https://musicportfolio-3na.pages.dev/m/15938e717d6c3f2996103895.1",
+              "https://musicportfolio-3na.pages.dev/m/15938e717d6c3f2996103895.2",
+              "https://musicportfolio-3na.pages.dev/m/15938e717d6c3f2996103895.3"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-10-668",
+          "title": "luv804 @noluvmusic",
+          "bpm": 97,
+          "key": "Bm",
+          "instrument": "Master Sample",
+          "duration": 138.56,
+          "peaks": [79,83,73,81,85,92,78,92,75,81,73,87,89,83,88,81,89,78,100,81,88,74,71,67,69,71,71,72,77,68,80,84,87,88,75,84,51,46,41,41,38,38,39,74,72,67,74,70,70,70,63,76,69,69,72,70,69,56,47,46,41,41,36,34,33,34,27,23,29,23,30,37,49,45,47,43,50,47,49,10,8,8,3,32,4,45,71,66,61,74,71,67,71,71,69,57,70,66,56,64],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/2f142aca1f68c7438a4033c8.opus",
+          "master": {
+            "filename": "luv804 97 Bminor @noluvmusic.wav",
+            "size": 36662290,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/b54727396c679ac545b004a7.0",
+              "https://musicportfolio-3na.pages.dev/m/b54727396c679ac545b004a7.1"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-11-874",
+          "title": "setembro @noluvmusic 32bit44.1khz",
+          "bpm": 92,
+          "key": "Dm",
+          "instrument": "Master Sample",
+          "duration": 177.39,
+          "peaks": [67,74,70,65,75,75,89,97,96,96,99,93,88,93,96,88,100,96,83,96,95,89,97,80,2,0,0,53,33,57,57,58,66,58,59,45,1,0,0,56,9,41,42,49,45,44,46,17,0,0,0,56,40,83,83,90,92,96,81,0,0,0,0,56,31,23,5,36,26,6,0,0,0,0,0,56,32,35,53,39,34,51,0,0,0,0,56,13,49,48,49,54,44,47,54,51,49,53,54,48],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/59b1be614e13705ec14ead1d.opus",
+          "master": {
+            "filename": "setembro 92 Dmin @noluvmusic 32bit44.1khz.wav",
+            "size": 62583840,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/b82e22c594474c2b20396ab6.0",
+              "https://musicportfolio-3na.pages.dev/m/b82e22c594474c2b20396ab6.1",
+              "https://musicportfolio-3na.pages.dev/m/b82e22c594474c2b20396ab6.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-12-104",
+          "title": "sentimento @noluvmusic 32bit44.1khz",
+          "bpm": 92,
+          "key": "Em",
+          "instrument": "Master Sample",
+          "duration": 177.39,
+          "peaks": [75,73,94,72,62,97,75,78,95,61,76,100,60,80,98,58,68,100,59,88,95,51,84,85,14,5,2,1,1,1,1,1,60,1,1,49,47,65,72,28,55,67,58,67,55,57,68,30,1,21,60,1,39,69,65,87,55,61,94,60,66,91,51,63,85,1,1,58,1,1,1,1,1,2,33,24,35,33,17,8,32,28,31,11,4,60,1,1,7,7,7,8,7,7,7,8,7,7,8,7],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/e4ec75bccf88d6b282ca82a8.opus",
+          "master": {
+            "filename": "sentimento 92 Em @noluvmusic 32bit44.1khz.wav",
+            "size": 62583840,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.0",
+              "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.1",
+              "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.2"
+            ]
+          },
+          "format": "WAV"
         }
       ]
     },
@@ -163,14 +323,14 @@
       "id": "pack-untitled-pack-0558",
       "name": "Fado Rosa",
       "cover": "/images/custom-pack-untitled-pack-0558-1791529546095.jpg",
-      "trackCount": 2,
+      "trackCount": 9,
       "description": "Guitar samples inspired in the emotion of fado.",
       "format": "WAV",
       "license": "Royalty-Free",
       "tracks": [
         {
           "id": "untitled-pack-0558-1-310",
-          "title": "fado rosa",
+          "title": "fado rosa @noluvmusic",
           "bpm": 122,
           "key": "Cm",
           "instrument": "Master Sample",
@@ -207,6 +367,146 @@
           },
           "format": "WAV",
           "peaks": [97,78,99,86,82,73,79,99,90,100,89,88,94,86,84,81,89,88,79,96,79,94,84,83,71,81,95,84,61,1,0,0,42,80,81,84,85,87,77,77,89,84,78,2,0,0,36,30,36,40,32,32,32,12,53,44,63,32,8,42,33,27,1,0,0,40,75,63,48,44,38,66,63,48,38,44,80,60,42,39,56,59,66,42,43,33,0,0,0,40,0,40,35,31,29,53,56,27,34,36]
+        },
+        {
+          "id": "untitled-pack-0558-3-810",
+          "title": "jantar dois @noluvmusic",
+          "bpm": 78,
+          "key": "A",
+          "instrument": "Master Sample",
+          "duration": 147.69,
+          "peaks": [95,73,97,84,94,72,89,98,89,82,87,94,90,76,70,98,82,82,66,100,82,88,62,96,73,3,0,0,0,0,0,0,0,0,0,0,0,31,0,0,0,72,82,68,99,79,87,60,90,67,1,0,0,0,32,0,0,0,46,55,57,34,50,15,61,66,11,0,0,0,32,0,0,0,0,32,37,15,15,34,31,27,39,16,2,1,0,32,0,0,0,69,56,61,91,68,61,48,94,78],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/925a7ff007142b348b9afba6.opus",
+          "master": {
+            "filename": "jantar a dois 78 cmin @noluvmusic.wav",
+            "size": 39079570,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/07a998b07fa047cbf78accbf.0",
+              "https://musicportfolio-3na.pages.dev/m/07a998b07fa047cbf78accbf.1"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0558-4-219",
+          "title": "her smile - @noluvmusic 32bit 44.1khz",
+          "bpm": 95,
+          "key": "Bbm",
+          "instrument": "Master Sample",
+          "duration": 171.76,
+          "peaks": [83,74,73,90,90,74,77,82,72,69,53,86,78,97,91,95,100,95,86,99,89,90,82,70,0,0,0,0,0,0,0,0,0,0,0,74,66,62,78,58,61,78,65,62,78,56,61,18,0,0,0,0,49,61,72,76,59,87,81,63,83,80,74,84,66,0,0,0,0,0,40,61,74,58,88,69,49,62,65,36,9,1,0,0,0,0,0,0,17,30,26,30,26,37,24,27,28,18,9,2],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/04c374641faa5729da803946.opus",
+          "master": {
+            "filename": "her smile - 95 Bbm @noluvmusic 32bit 44.1khz.wav",
+            "size": 60598224,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/a15308352abe349c03303f25.0",
+              "https://musicportfolio-3na.pages.dev/m/a15308352abe349c03303f25.1",
+              "https://musicportfolio-3na.pages.dev/m/a15308352abe349c03303f25.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0558-5-390",
+          "title": "ardor - @noluvmusic 32bit 44.1khz",
+          "bpm": 83,
+          "key": "A#m",
+          "instrument": "Master Sample",
+          "duration": 170.6,
+          "peaks": [85,92,85,83,75,82,82,92,100,82,85,84,91,80,88,96,82,77,76,85,87,96,100,85,75,89,89,29,0,0,0,0,0,46,73,82,80,79,66,71,72,72,87,74,77,68,68,55,0,0,0,0,0,0,0,56,41,57,55,58,52,41,60,30,57,54,60,47,0,0,0,0,0,0,36,76,69,42,42,56,64,71,90,79,39,60,79,78,28,0,0,0,0,6,55,22,21,36,48,4],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/a0ffb097afd7ec213ffa4eea.opus",
+          "master": {
+            "filename": "ardor - 83 A#m @noluvmusic 32bit 44.1khz.wav",
+            "size": 60188712,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/0eef6ba0faff7af1b1498731.0",
+              "https://musicportfolio-3na.pages.dev/m/0eef6ba0faff7af1b1498731.1",
+              "https://musicportfolio-3na.pages.dev/m/0eef6ba0faff7af1b1498731.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0558-6-446",
+          "title": "fio de seda @noluvmusic",
+          "bpm": 70,
+          "key": "Abm",
+          "instrument": "Master Sample",
+          "duration": 274.29,
+          "peaks": [89,64,91,84,97,92,67,93,83,95,90,66,92,85,100,63,42,60,48,56,10,0,0,28,0,58,55,66,50,59,11,0,0,29,4,51,42,55,37,43,51,44,55,33,43,5,0,0,29,0,29,22,40,31,33,5,0,0,29,0,14,25,36,18,30,32,31,42,30,18,22,20,20,37,28,4,0,0,29,52,48,0,0,0,0,0,0,0,29,0,78,39,78,77,88,75,36,78,76,87],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/a487f531672e944a4e441957.opus",
+          "master": {
+            "filename": "fio de seda 70 Abm @noluvmusic.wav",
+            "size": 72576184,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/6b8963b24cbe1051060b558f.0",
+              "https://musicportfolio-3na.pages.dev/m/6b8963b24cbe1051060b558f.1",
+              "https://musicportfolio-3na.pages.dev/m/6b8963b24cbe1051060b558f.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0558-7-422",
+          "title": "estrelas de cinema - @noluvmusic 44.1khz 24bit",
+          "bpm": 132,
+          "key": "Gbm",
+          "instrument": "Master Sample",
+          "duration": 378.18,
+          "peaks": [57,60,67,72,76,78,80,93,96,100,95,75,73,69,75,71,72,68,75,71,74,75,79,30,0,0,19,52,59,64,54,1,0,0,32,38,38,40,37,40,36,39,24,0,0,0,27,37,40,42,39,40,39,42,34,39,39,37,1,0,0,19,21,17,17,13,0,0,0,52,59,47,54,13,0,0,28,42,42,37,4,0,0,0,48,63,67,62,53,0,0,0,35,29,32,34,29,32,31,34],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/cc6cfbfcee17c2512b194dd2.opus",
+          "master": {
+            "filename": "estrelas de cinema - 132 Gbm @noluvmusic 44.1khz 24bit.wav",
+            "size": 100067092,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/d4831479c55e1b8d0ed76489.0",
+              "https://musicportfolio-3na.pages.dev/m/d4831479c55e1b8d0ed76489.1",
+              "https://musicportfolio-3na.pages.dev/m/d4831479c55e1b8d0ed76489.2",
+              "https://musicportfolio-3na.pages.dev/m/d4831479c55e1b8d0ed76489.3"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-0558-8-975",
+          "title": "sonhos (sem intro) @noluvmusic",
+          "bpm": 91,
+          "key": "Ebm",
+          "instrument": "Master Sample",
+          "duration": 327.03,
+          "peaks": [88,100,86,77,90,86,83,76,87,77,83,80,73,63,75,61,60,80,56,28,2,0,0,0,1,45,61,75,58,65,77,55,17,0,26,72,78,79,62,69,74,54,6,0,26,58,65,51,58,67,33,11,0,0,45,55,58,53,53,66,61,56,59,55,39,0,26,5,16,14,13,12,14,15,11,1,26,22,27,19,24,3,0,26,18,16,19,13,12,15,10,0,26,11,24,18,25,19,24,18],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/e6b0207e4558be75a8a8d306.opus",
+          "master": {
+            "filename": "sonhos (sem intro) Ebm 91 @noluvmusic.wav",
+            "size": 86533108,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/aee235656388cd78a1e2aaca.0",
+              "https://musicportfolio-3na.pages.dev/m/aee235656388cd78a1e2aaca.1",
+              "https://musicportfolio-3na.pages.dev/m/aee235656388cd78a1e2aaca.2",
+              "https://musicportfolio-3na.pages.dev/m/aee235656388cd78a1e2aaca.3"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-13-966",
+          "title": "compromisso @noluvmusic",
+          "bpm": 140,
+          "key": "Bm",
+          "instrument": "Master Sample",
+          "duration": 185.14,
+          "peaks": [79,76,77,83,68,76,58,82,81,80,77,81,77,85,68,52,62,40,60,50,64,39,91,84,77,73,82,100,77,31,2,0,0,0,0,0,50,61,64,58,65,52,53,38,60,54,63,55,68,47,44,25,5,0,0,53,33,44,33,45,33,30,22,4,0,0,83,66,83,53,75,84,91,50,88,83,57,70,70,97,67,21,0,0,50,47,45,63,71,48,56,49,58,67,51,55,66,55,61,67],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/f2a46b323b76f00d8d755fb1.opus",
+          "master": {
+            "filename": "compromisso 140 Bm @noluvmusic.wav",
+            "size": 48988984,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/64e962fee7047dc65ef0fb15.0",
+              "https://musicportfolio-3na.pages.dev/m/64e962fee7047dc65ef0fb15.1"
+            ]
+          },
+          "format": "WAV"
         }
       ]
     },

@@ -14,7 +14,12 @@ export default function usePreviewPlayer() {
       }
       const audio = new Audio(url);
       audio.volume = 0.25;
-      audio.play();
+      const stop = (err) => {
+        console.warn('Preview playback failed:', err);
+        if (audioRef.current === audio) setPlayingId(null);
+      };
+      audio.onerror = () => stop(audio.error);
+      audio.play().catch((err) => err.name !== 'AbortError' && stop(err));
       audio.onended = () => setPlayingId(null);
       audioRef.current = audio;
       setPlayingId(id);
