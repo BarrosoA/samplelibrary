@@ -4,21 +4,48 @@ import PauseIcon from '../PauseIcon';
 import { setDragPill } from './studioUtils';
 
 // samples in a pack: drag rows to reorder, or onto a sidebar pack to move them
-export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete, onRename }) {
+export default function TrackTable({ pack, tracks, player, downloads, draggedTrack, onDragTrack, onReorder, onDelete, onRename, onEditMeta }) {
   const [dragOverTrackId, setDragOverTrackId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [titleValue, setTitleValue] = useState('');
+  // one cell at a time: { id, field } where field is title, bpm or key
+  const [editing, setEditing] = useState(null);
+  const [editValue, setEditValue] = useState('');
 
-  const startRename = (track) => {
-    setEditingId(track.id);
-    setTitleValue(track.title || '');
+  const startEdit = (track, field) => {
+    setEditing({ id: track.id, field });
+    const current = track[field];
+    setEditValue(current && current !== '-' ? String(current) : '');
   };
 
-  const saveRename = (track) => {
-    setEditingId(null);
-    const trimmed = titleValue.trim();
-    if (trimmed && trimmed !== track.title) onRename(track, trimmed);
+  const saveEdit = (track) => {
+    if (!editing) return;
+    const { field } = editing;
+    setEditing(null);
+    const trimmed = editValue.trim();
+
+    if (field === 'title') {
+      if (trimmed && trimmed !== track.title) onRename(track, trimmed);
+    } else if (field === 'bpm') {
+      if (trimmed && Number(trimmed) !== track.bpm) onEditMeta(track, { bpm: Number(trimmed) });
+    } else if ((trimmed || '-') !== (track.key || '-')) {
+      onEditMeta(track, { key: trimmed });
+    }
   };
+
+  const editInput = (track, className, extra = {}) => (
+    <input
+      className={className}
+      value={editValue}
+      autoFocus
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={() => saveEdit(track)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.target.blur();
+        if (e.key === 'Escape') setEditing(null);
+      }}
+      {...extra}
+    />
+  );
 
   const handleDragStart = (e, track) => {
     onDragTrack(track);
@@ -72,7 +99,8 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
         const isPlaying = !isPending && player.playingId === track.id;
         const isDragging = !isPending && draggedTrack?.id === track.id;
         const isDragOver = !isPending && dragOverTrackId === track.id;
-        const isEditing = !isPending && editingId === track.id;
+        const isEditing = !isPending && editing?.id === track.id;
+        const editingField = isEditing ? editing.field : null;
         const dl = downloads && (downloads.tracks[track.id] || { single: 0, inPack: 0 });
 
         return (
@@ -102,23 +130,12 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
             </div>
 
             <div className="st-col-title">
-              {isEditing ? (
-                <input
-                  className="st-track-title-input"
-                  value={titleValue}
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => setTitleValue(e.target.value)}
-                  onBlur={() => saveRename(track)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.target.blur();
-                    if (e.key === 'Escape') setEditingId(null);
-                  }}
-                />
+              {editingField === 'title' ? (
+                editInput(track, 'st-track-title-input')
               ) : (
                 <span
                   className={`st-track-title ${isPending ? '' : 'is-editable'}`}
-                  onClick={() => !isPending && startRename(track)}
+                  onClick={() => !isPending && startEdit(track, 'title')}
                   title={isPending ? undefined : 'Click to rename'}
                 >
                   {track.title}
@@ -128,11 +145,35 @@ export default function TrackTable({ pack, tracks, player, downloads, draggedTra
             </div>
 
             <div className="st-col-meta">
-              <span className="st-badge">{track.bpm || '-'}</span>
+              {editingField === 'bpm' ? (
+                editInput(track, 'st-meta-input', {
+                  inputMode: 'numeric',
+                  maxLength: 3,
+                  onChange: (e) => setEditValue(e.target.value.replace(/\D/g, '')),
+                })
+              ) : (
+                <span
+                  className={`st-badge ${isPending ? '' : 'is-editable'}`}
+                  onClick={() => !isPending && startEdit(track, 'bpm')}
+                  title={isPending ? undefined : 'Click to edit BPM'}
+                >
+                  {track.bpm || '-'}
+                </span>
+              )}
             </div>
 
             <div className="st-col-meta">
-              <span className="st-badge">{track.key || '-'}</span>
+              {editingField === 'key' ? (
+                editInput(track, 'st-meta-input', { placeholder: 'e.g. C#m' })
+              ) : (
+                <span
+                  className={`st-badge ${isPending ? '' : 'is-editable'}`}
+                  onClick={() => !isPending && startEdit(track, 'key')}
+                  title={isPending ? undefined : 'Click to edit key'}
+                >
+                  {track.key || '-'}
+                </span>
+              )}
             </div>
 
             <div className="st-col-dur">

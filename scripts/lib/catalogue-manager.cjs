@@ -453,6 +453,16 @@ function updateTrack(packId, trackId, updates = {}) {
     if (trimmed) track.title = trimmed;
   }
 
+  if (updates.bpm !== undefined) {
+    const bpm = Number(updates.bpm);
+    if (!Number.isInteger(bpm) || bpm < 20 || bpm > 999) throw new Error('BPM must be a whole number between 20 and 999');
+    track.bpm = bpm;
+  }
+
+  if (typeof updates.key === 'string') {
+    track.key = updates.key.trim() || '-';
+  }
+
   saveCatalogue(data);
   return { success: true, track };
 }

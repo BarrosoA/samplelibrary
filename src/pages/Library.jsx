@@ -242,6 +242,10 @@ export default function Library() {
         </>
       )}
 
+      <footer className="site-note">
+        These samples are not royalty-free. Any release using them needs prior agreement, and beat sales are split equally.
+      </footer>
+
       {isOwner && (
         <a className="studio-fab" href={STUDIO_LINK} title="Open Studio Manager" aria-label="Open Studio Manager">
           <FolderKanban size={16} />

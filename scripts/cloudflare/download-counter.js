@@ -64,7 +64,9 @@ export default {
     const add = env.DB.prepare('INSERT INTO counts (key, n) VALUES (?1, 1) ON CONFLICT(key) DO UPDATE SET n = n + 1');
     await env.DB.batch(keys.map((key) => add.bind(key)));
 
-    const name = inPack ? known.packs[body.pack] : known.tracks[ids[0]];
+    const fullName = inPack ? known.packs[body.pack] : known.tracks[ids[0]];
+    // telegram turns @handles into blue links, so they're left out of the message
+    const name = fullName.replace(/\s*@\w+/g, '').trim() || fullName;
     ctx.waitUntil(notify(env, `Someone downloaded "${name}"`).catch(() => {}));
     return reply(204);
   },

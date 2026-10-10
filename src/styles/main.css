@@ -60,6 +60,17 @@ a {
   width: 100%;
 }
 
+.site-note {
+  margin-top: auto;
+  padding-top: 64px;
+  font-size: 0.7rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-muted);
+  opacity: 0.7;
+  text-align: center;
+}
+
 /* Header bar */
 .top-nav {
   display: flex;
@@ -1725,6 +1736,36 @@ a {
 .st-badge {
   color: #888888;
   font-variant-numeric: tabular-nums;
+}
+
+.st-badge.is-editable {
+  cursor: text;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.st-badge.is-editable:hover {
+  color: #ededed;
+  background: #1a1a1a;
+}
+
+.st-meta-input {
+  width: 100%;
+  max-width: 72px;
+  padding: 2px 6px;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  background: #0b0b0b;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+}
+
+.st-meta-input:focus {
+  border-color: #666666;
 }
 
 .st-col-dur {

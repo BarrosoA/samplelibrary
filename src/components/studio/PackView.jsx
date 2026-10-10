@@ -71,6 +71,15 @@ export default function PackView({
     }
   };
 
+  const handleEditTrackMeta = async (track, updates) => {
+    try {
+      await postJson('update-track', { packId: pack.id, trackId: track.id, updates }, 'Failed to update sample');
+      await onChanged();
+    } catch (err) {
+      notify(err.message, 'error');
+    }
+  };
+
   const handleDeleteTrack = async (track) => {
     if (!window.confirm(`Delete "${track.title}" from ${pack.name}? This unlinks its preview MP3.`)) return;
     try {
@@ -165,6 +174,7 @@ export default function PackView({
             onReorder={onReorderTracks}
             onDelete={handleDeleteTrack}
             onRename={handleRenameTrack}
+            onEditMeta={handleEditTrackMeta}
           />
         )}
       </div>
