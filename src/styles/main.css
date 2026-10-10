@@ -13,6 +13,9 @@
   --accent: #ffffff;
   --badge-bg: rgba(0, 0, 0, 0.75);
   --radius-card: 12px;
+  /* page content and the player bar line up on this width */
+  --content-width: 832px;
+  --page-gutter: 24px;
   --radius-pill: 9999px;
   --radius-badge: 6px;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Roboto Mono', 'Cascadia Code', Menlo, Consolas, monospace;
@@ -50,8 +53,8 @@ a {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 32px 24px 120px 24px;
-  max-width: 880px;
+  padding: 32px var(--page-gutter) 120px var(--page-gutter);
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin: 0 auto;
   width: 100%;
 }
@@ -641,12 +644,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
+  padding: 0 var(--page-gutter);
   z-index: 50;
 }
 
 .player-inner {
-  max-width: 880px;
+  max-width: var(--content-width);
   width: 100%;
   display: grid;
   grid-template-columns: 240px 1fr 180px;
