@@ -472,6 +472,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  justify-self: center; /* centered in its grid column, not pinned to its left edge */
   position: relative;
   width: 28px;
   height: 28px;
@@ -2174,20 +2175,17 @@ a {
 }
 
 .pack-glow {
-  position: absolute;
-  top: calc(-1 * var(--page-top)); /* reaches the top of the window */
-  left: 50%;
-  width: 100vw;
-  height: 520px;
-  transform: translateX(-50%);
+  /* fills the whole window and stays put while the page scrolls */
+  position: fixed;
+  inset: 0;
   overflow: hidden; /* the scaled, blurred cover must not widen the page */
   opacity: 0;
   transition: opacity 0.8s ease;
   pointer-events: none;
   z-index: 0;
-  /* fades out downwards so the tracklist sits on the plain background */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 100%);
+  /* a little softer towards the bottom so long tracklists stay easy to read */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.55) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.55) 100%);
 }
 
 /* the cover itself, blurred into soft colour; scaled up so the blur has no hard edges */
