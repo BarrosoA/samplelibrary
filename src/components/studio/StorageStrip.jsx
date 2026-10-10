@@ -56,7 +56,7 @@ export default function StorageStrip({ storage, downloads }) {
         title="Samples stored on Cloudflare. Each sample's preview and WAV count once."
       />
 
-      <Stat label="CLOUD STORAGE" value={formatBytes(shown.bytes)} sub="no size cap" title="Total size of the live media on Cloudflare Pages. The free plan has no total size limit." />
+      <Stat label="CLOUD STORAGE" value={formatBytes(shown.bytes)} title="Total size of the live media on Cloudflare Pages. The free plan has no total size limit." />
 
       <Stat
         label="FILES"

@@ -53,7 +53,7 @@ export default function AudioPlayer({
 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.85);
+  const [volume, setVolume] = useState(0.25);
   const [isMuted, setIsMuted] = useState(false);
   const [downloadState, setDownloadState] = useState('idle');
 
