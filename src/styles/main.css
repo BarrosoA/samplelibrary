@@ -53,7 +53,8 @@ a {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 32px var(--page-gutter) 120px var(--page-gutter);
+  --page-top: 56px;
+  padding: var(--page-top) var(--page-gutter) 120px var(--page-gutter);
   max-width: calc(var(--content-width) + 2 * var(--page-gutter));
   margin: 0 auto;
   width: 100%;
@@ -1818,7 +1819,8 @@ a {
 @media (max-width: 640px) {
   .app-wrapper {
     /* leave room for the fixed player so the last rows can scroll above it */
-    padding: 16px 16px calc(140px + env(safe-area-inset-bottom, 0px)) 16px;
+    --page-top: 24px;
+    padding: var(--page-top) 16px calc(140px + env(safe-area-inset-bottom, 0px)) 16px;
   }
 
   /* library header: title on its own line, search full width below */
@@ -2131,7 +2133,7 @@ a {
 
 .pack-glow {
   position: absolute;
-  top: -32px;
+  top: calc(-1 * var(--page-top)); /* reaches the top of the window */
   left: 50%;
   width: 100vw;
   height: 460px;
