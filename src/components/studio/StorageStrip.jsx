@@ -47,6 +47,17 @@ export default function StorageStrip({ storage, downloads }) {
     <div className="studio-usage-strip">
       <DownloadsStat downloads={downloads} />
 
+      <Stat
+        label="SAMPLES ON CLOUD"
+        value={shown.samples.toLocaleString()}
+        sub={
+          storage.live && storage.afterPublish.samples !== shown.samples
+            ? `${storage.afterPublish.samples.toLocaleString()} after publish`
+            : 'preview + WAV count as 1'
+        }
+        title="Samples stored on Cloudflare. Each sample's preview and WAV count once."
+      />
+
       <Stat label="CLOUD STORAGE" value={formatBytes(shown.bytes)} sub="no size cap" title="Total size of the live media on Cloudflare Pages. The free plan has no total size limit." />
 
       <Stat

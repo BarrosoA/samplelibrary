@@ -471,15 +471,17 @@ function measureSnapshot(snapshot, sizeByKey) {
     files += 1;
     bytes += Number(entry.slice(idx + 1)) || 0;
   }
+  // one per sample: its preview and its master (however many parts) are the same sample
+  const masters = snapshot.filter((e) => e.startsWith('master:'));
   // masters rebuilt from originals at publish time; ones kept as parts were already counted above
-  for (const entry of snapshot.filter((e) => e.startsWith('master:'))) {
+  for (const entry of masters) {
     const [, key, size] = entry.split(':');
     if (stored.has(`m/${key}.0`)) continue;
     const n = Number(size) || sizeByKey.get(key) || 0;
     files += Math.max(1, Math.ceil(n / PART_SIZE));
     bytes += n;
   }
-  return { files, bytes };
+  return { files, bytes, samples: masters.length };
 }
 
 // older snapshots recorded masters without their size
