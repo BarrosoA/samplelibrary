@@ -70,15 +70,6 @@ export default function StorageStrip({ storage, downloads }) {
         </span>
       </Stat>
 
-      <Stat label="BANDWIDTH" value="Unlimited" sub="free plan" title="Cloudflare Pages doesn't limit or bill bandwidth for static files." />
-
-      <Stat
-        label="MAX FILE"
-        value={formatBytes(storage.fileSizeLimit)}
-        sub="big masters auto-split"
-        title="Cloudflare Pages rejects files over 25 MB, so larger masters are uploaded in parts and joined on download."
-      />
-
       <Stat
         label="SNAPSHOTS KEPT"
         value={`Last ${storage.keepCount}`}

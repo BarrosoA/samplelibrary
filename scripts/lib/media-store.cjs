@@ -501,7 +501,6 @@ function cloudUsage(catalogue) {
   const live = readLastSnapshot(catalogue);
   return {
     fileLimit: PAGES_FILE_LIMIT,
-    fileSizeLimit: PART_SIZE + 1024 * 1024,
     ...keepSettings(),
     live: live ? { ...measureSnapshot(live, sizeByKey), publishedAt: fs.statSync(d.state).mtimeMs } : null,
     afterPublish: measureSnapshot(current, sizeByKey),
