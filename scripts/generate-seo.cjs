@@ -42,9 +42,6 @@ function generateSeo() {
 
   // generate pre-rendered html for each individual pack
   packs.forEach((pack) => {
-    const packDir = path.join(distDir, 'pack', pack.id);
-    fs.mkdirSync(packDir, { recursive: true });
-
     const packTitle = `${pack.name} — NO LUV`;
     const packDesc = pack.description || `Original master samples by @noluvmusic. ${pack.tracks ? pack.tracks.length : 0} samples included.`;
     const packCover = pack.cover || (latestPack ? latestPack.cover : '/images/pack-cover.jpg');
@@ -76,9 +73,14 @@ function generateSeo() {
         `<meta name="twitter:image" content="${packCover}" />`
       );
 
-    const outPath = path.join(packDir, 'index.html');
-    fs.writeFileSync(outPath, packHtml, 'utf-8');
-    console.log(`[SEO] Generated pre-rendered social page for pack: ${pack.id} (${packTitle})`);
+    // the name slug is the real url; the id and old slugs get the same page so shared links keep their preview
+    const urlNames = [pack.slug, pack.id, ...(pack.oldSlugs || [])].filter(Boolean);
+    [...new Set(urlNames)].forEach((name) => {
+      const packDir = path.join(distDir, 'pack', name);
+      fs.mkdirSync(packDir, { recursive: true });
+      fs.writeFileSync(path.join(packDir, 'index.html'), packHtml, 'utf-8');
+    });
+    console.log(`[SEO] Generated pre-rendered social page for pack: ${pack.slug || pack.id} (${packTitle})`);
   });
 
   console.log('[SEO] SEO pre-rendering complete.');

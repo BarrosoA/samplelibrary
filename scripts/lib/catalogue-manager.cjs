@@ -13,10 +13,49 @@ function loadCatalogue() {
   return JSON.parse(content);
 }
 
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// url slug from the pack name, unique among packs (ids and old slugs included)
+function uniqueSlug(packs, name, self) {
+  const taken = new Set();
+  packs.forEach((p) => {
+    if (p === self) return;
+    taken.add(p.id);
+    if (p.slug) taken.add(p.slug);
+    (p.oldSlugs || []).forEach((s) => taken.add(s));
+  });
+  const base = slugify(name) || 'pack';
+  let slug = base;
+  for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+  return slug;
+}
+
+// keep the url slug in step with the pack name; old slugs stay so shared links keep working
+function syncPackSlug(packs, pack) {
+  const wanted = slugify(pack.name) || 'pack';
+  // a "-2" style suffix added for uniqueness still counts as matching
+  if (pack.slug && (pack.slug === wanted || new RegExp(`^${wanted}-\\d+$`).test(pack.slug))) return;
+  if (pack.slug) {
+    pack.oldSlugs = (pack.oldSlugs || []).filter((s) => s !== pack.slug);
+    pack.oldSlugs.push(pack.slug);
+  }
+  pack.slug = uniqueSlug(packs, pack.name, pack);
+  if (pack.oldSlugs) {
+    pack.oldSlugs = pack.oldSlugs.filter((s) => s !== pack.slug);
+    if (!pack.oldSlugs.length) delete pack.oldSlugs;
+  }
+}
+
 function saveCatalogue(data) {
   if (data.packs) {
     data.packs.forEach((p) => {
       p.trackCount = p.tracks ? p.tracks.length : 0;
+      syncPackSlug(data.packs, p);
     });
   }
   // waveforms on one line each instead of 160
@@ -364,10 +403,7 @@ async function importPackFromStaging({ folderPath, packName, description }) {
     throw new Error(`staging folder ${folderPath} does not exist`);
   }
 
-  const slug = packName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || `pack-${Date.now()}`;
+  const slug = slugify(packName) || `pack-${Date.now()}`;
 
   const files = fs.readdirSync(folderPath);
 
@@ -471,10 +507,7 @@ function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
   const data = loadCatalogue();
   data.packs = data.packs || [];
 
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'pack';
+  const baseSlug = slugify(name) || 'pack';
   const idSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
   const newPack = {

@@ -70,8 +70,15 @@ export default function Library() {
       }
 
       if (packId) {
-        const found = (data.packs || []).find((p) => p.id === packId);
-        if (found) setSelectedPack(found);
+        // links use the name slug; old id and renamed-slug links still resolve
+        const found = (data.packs || []).find((p) =>
+          p.slug === packId || p.id === packId || (p.oldSlugs || []).includes(packId)
+        );
+        if (found) {
+          setSelectedPack(found);
+          const canonical = `/pack/${found.slug || found.id}`;
+          if (window.location.pathname.replace(/\/$/, '') !== canonical) window.history.replaceState(null, '', canonical);
+        }
       } else {
         setSelectedPack(null);
       }
@@ -88,7 +95,7 @@ export default function Library() {
 
   const handleSelectPack = (pack) => {
     setSelectedPack(pack);
-    window.history.pushState(null, '', `/pack/${pack.id}`);
+    window.history.pushState(null, '', `/pack/${pack.slug || pack.id}`);
   };
 
   const handleBackToPacks = () => {
