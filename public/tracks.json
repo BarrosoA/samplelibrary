@@ -4,7 +4,7 @@
       "id": "pack-untitled-pack-7215",
       "name": "REGGAETON 001",
       "cover": "/images/custom-pack-untitled-pack-7215-1791612599758.jpg",
-      "trackCount": 12,
+      "trackCount": 13,
       "description": "Synths and textures for reggaeton, melodic.",
       "format": "WAV",
       "license": "Royalty-Free",
@@ -243,6 +243,27 @@
               "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.0",
               "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.1",
               "https://musicportfolio-3na.pages.dev/m/a7c8536bd1ff5048e59df7f7.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-7215-13-441",
+          "title": "EUPHORIA @noluvmusic",
+          "bpm": 92,
+          "key": "E",
+          "instrument": "Master Sample",
+          "duration": 255.9,
+          "peaks": [73,76,78,78,91,93,98,89,92,92,100,89,86,79,82,81,76,77,77,81,81,80,81,79,81,80,82,80,64,0,0,0,46,71,75,73,76,72,76,77,78,79,79,78,78,78,78,79,78,0,0,0,0,37,40,39,29,30,37,42,32,39,39,35,35,34,39,35,34,11,0,0,0,65,72,83,67,5,0,0,0,16,19,23,19,12,0,0,0,35,44,50,44,41,0,2,13,61,48,9],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/20fa0016a84efcad226f622f.opus",
+          "master": {
+            "filename": "EUPHORIA 92 E @noluvmusic.wav",
+            "size": 90280550,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/19633693bd54d8dd7b5783a1.0",
+              "https://musicportfolio-3na.pages.dev/m/19633693bd54d8dd7b5783a1.1",
+              "https://musicportfolio-3na.pages.dev/m/19633693bd54d8dd7b5783a1.2",
+              "https://musicportfolio-3na.pages.dev/m/19633693bd54d8dd7b5783a1.3"
             ]
           },
           "format": "WAV"
