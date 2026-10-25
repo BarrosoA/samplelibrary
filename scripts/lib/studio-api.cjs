@@ -10,7 +10,7 @@ const AUDIO_TYPES = { '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio
 // watchdog tracks studio manager activity and auto-stops server when closed
 const WATCHDOG_TIMEOUT_MS = 25000;
 const STARTUP_GRACE_MS = 30000;
-const GOODBYE_GRACE_MS = 5000;
+const GOODBYE_GRACE_MS = 1000;
 
 const watchdog = global.__studioWatchdogState || (global.__studioWatchdogState = {
   lastHeartbeat: 0,
