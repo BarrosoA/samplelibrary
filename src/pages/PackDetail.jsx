@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Play, Download, FolderArchive, Loader2, Check, Image, Droplet } from 'lucide-react';
+import { ArrowLeft, Play, Download, FolderArchive, Loader2, Check } from 'lucide-react';
 import PauseIcon from '../components/PauseIcon';
 import { canDownloadTrack, downloadPack, downloadTrack } from '../utils/download';
 import { getCoverColor } from '../utils/coverColor';
@@ -23,6 +23,7 @@ export default function PackDetail({
   activeTrack,
   isPlaying,
   onPlayTrack,
+  backdrop: parentBackdrop,
 }) {
   if (!pack) return null;
 
@@ -30,17 +31,8 @@ export default function PackDetail({
   const [downloadStates, setDownloadStates] = useState({});
   const [downloadAllState, setDownloadAllState] = useState('idle');
   const [glowColor, setGlowColor] = useState(null);
-  const [backdrop, setBackdrop] = useState(readBackdrop);
-
-  const toggleBackdrop = () => {
-    const next = backdrop === 'textured' ? 'minimal' : 'textured';
-    setBackdrop(next);
-    try {
-      localStorage.setItem(BACKDROP_KEY, next);
-    } catch {
-      // private mode: the choice just isn't remembered
-    }
-  };
+  const [internalBackdrop] = useState(readBackdrop);
+  const backdrop = parentBackdrop ?? internalBackdrop;
 
   useEffect(() => {
     let cancelled = false;
@@ -125,20 +117,6 @@ export default function PackDetail({
           <ArrowLeft size={20} />
         </button>
       </nav>
-
-      <button
-        type="button"
-        role="switch"
-        aria-checked={backdrop === 'minimal'}
-        className={`backdrop-toggle is-${backdrop}`}
-        onClick={toggleBackdrop}
-        title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the cover background'}
-        aria-label="Minimal background"
-      >
-        <span className="backdrop-toggle-knob" aria-hidden="true" />
-        <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
-        <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
-      </button>
 
       {/* album hero banner */}
       <section className="album-hero">

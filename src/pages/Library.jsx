@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, FolderKanban, Image, ImageOff } from 'lucide-react';
+import { Search, FolderKanban, Image, Droplet } from 'lucide-react';
 import { readOwnerFlag, STUDIO_LINK } from '../utils/owner';
 import PackCard from '../components/PackCard';
 import PackDetail from './PackDetail';
@@ -9,9 +9,10 @@ import defaultCatalogue from '../data/tracks.json';
 const BACKDROP_KEY = 'library-backdrop';
 const readBackdrop = () => {
   try {
-    return localStorage.getItem(BACKDROP_KEY) === 'textured' ? 'textured' : 'minimal';
+    const saved = localStorage.getItem(BACKDROP_KEY) || localStorage.getItem('pack-backdrop');
+    return saved === 'minimal' ? 'minimal' : 'textured';
   } catch {
-    return 'minimal';
+    return 'textured';
   }
 };
 
@@ -32,7 +33,8 @@ export default function Library() {
     const next = backdrop === 'textured' ? 'minimal' : 'textured';
     setBackdrop(next);
     try {
-      localStorage.setItem(BACKDROP_KEY, next);
+      localStorage.setItem('library-backdrop', next);
+      localStorage.setItem('pack-backdrop', next);
     } catch {
       // private mode
     }
@@ -210,6 +212,7 @@ export default function Library() {
           activeTrack={activeTrack}
           isPlaying={isPlaying}
           onPlayTrack={handlePlayTrack}
+          backdrop={backdrop}
         />
       ) : (
         /* main packs catalogue view */
@@ -246,20 +249,6 @@ export default function Library() {
                   }}
                 />
               </div>
-
-              <button
-                type="button"
-                role="switch"
-                aria-checked={backdrop === 'minimal'}
-                className={`backdrop-toggle is-${backdrop}`}
-                onClick={toggleBackdrop}
-                title={backdrop === 'textured' ? 'Switch to solid black background' : 'Switch to recent pack backdrop'}
-                aria-label="Toggle backdrop"
-              >
-                <span className="backdrop-toggle-knob" aria-hidden="true" />
-                <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
-                <ImageOff size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
-              </button>
             </div>
           </header>
 
@@ -297,11 +286,27 @@ export default function Library() {
         These samples are not royalty-free. Any release using them needs prior agreement, and beat sales are split equally.
       </footer>
 
-      {isOwner && (
-        <a className="studio-fab" href={STUDIO_LINK} title="Open Studio Manager" aria-label="Open Studio Manager">
-          <FolderKanban size={16} />
-        </a>
-      )}
+      <div className="bottom-floating-actions">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={backdrop === 'minimal'}
+          className={`backdrop-toggle is-${backdrop}`}
+          onClick={toggleBackdrop}
+          title={backdrop === 'textured' ? 'Switch to minimal background' : 'Switch to cover background'}
+          aria-label="Toggle background style"
+        >
+          <span className="backdrop-toggle-knob" aria-hidden="true" />
+          <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
+          <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
+        </button>
+
+        {isOwner && (
+          <a className="studio-fab" href={STUDIO_LINK} title="Open Studio Manager" aria-label="Open Studio Manager">
+            <FolderKanban size={16} />
+          </a>
+        )}
+      </div>
 
       {/* persistent bottom audio player */}
       <AudioPlayer

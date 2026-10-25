@@ -261,10 +261,20 @@ a {
   width: 46px;
   height: 24px;
   padding: 0 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.backdrop-toggle:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .backdrop-toggle-knob {
@@ -668,12 +678,23 @@ a {
   background: rgba(255, 85, 85, 0.12);
 }
 
-/* owner-only shortcut to the local Studio Manager; sits above the player bar while it's open */
-.studio-fab {
+/* bottom-right floating actions: backdrop switch and owner studio button */
+.bottom-floating-actions {
   position: fixed;
   right: 20px;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: bottom 0.2s ease;
+}
+
+.app-wrapper:has(.audio-player-bar) .bottom-floating-actions {
+  bottom: 92px;
+}
+
+.studio-fab {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -684,17 +705,13 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #9a9a9a;
   opacity: 0.6;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, bottom 0.2s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .studio-fab:hover {
   opacity: 1;
   background: #ffffff;
   color: #0f0f0f;
-}
-
-.app-wrapper:has(.audio-player-bar) .studio-fab {
-  bottom: 92px;
 }
 
 /* Audio Player Bar (centered, neat, organized) */
@@ -2173,7 +2190,7 @@ a {
   .progress-bar-wrap.has-waveform.is-scrubbing {
     height: 22px;
   }
-  .studio-fab {
+  .bottom-floating-actions {
     display: none;
   }
 }
@@ -2380,20 +2397,6 @@ a {
   }
 }
 
-/* top right of the window, level with the back arrow; scrolls away with the page */
-.pack-detail-page > .backdrop-toggle {
-  position: absolute;
-  top: 6px;
-  right: 0;
-  z-index: 2;
-}
-
-@media (min-width: 960px) {
-  .pack-detail-page > .backdrop-toggle {
-    /* from the centred content column out to the window edge (the extra px clears the scrollbar) */
-    right: calc(50% - 50vw + 40px);
-  }
-}
 
 /* the cover itself, blurred into soft colour; scaled up so the blur has no hard edges */
 .pack-glow::before {
