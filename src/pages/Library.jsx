@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, FolderKanban } from 'lucide-react';
+import { Search, FolderKanban, Image, Droplet } from 'lucide-react';
 import { readOwnerFlag, STUDIO_LINK } from '../utils/owner';
+import { getCoverColor } from '../utils/coverColor';
 import PackCard from '../components/PackCard';
 import PackDetail from './PackDetail';
 import AudioPlayer from '../components/AudioPlayer';
 import defaultCatalogue from '../data/tracks.json';
+
+const BACKDROP_KEY = 'library-backdrop';
+const readBackdrop = () => {
+  try {
+    return localStorage.getItem(BACKDROP_KEY) === 'textured' ? 'textured' : 'minimal';
+  } catch {
+    return 'minimal';
+  }
+};
 
 export default function Library() {
   const [data, setData] = useState({
@@ -15,6 +25,33 @@ export default function Library() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isOwner, setIsOwner] = useState(readOwnerFlag);
+  const [backdrop, setBackdrop] = useState(readBackdrop);
+  const [glowColor, setGlowColor] = useState(null);
+
+  const recentPack = data.packs && data.packs.length > 0 ? data.packs[0] : null;
+
+  const toggleBackdrop = () => {
+    const next = backdrop === 'textured' ? 'minimal' : 'textured';
+    setBackdrop(next);
+    try {
+      localStorage.setItem(BACKDROP_KEY, next);
+    } catch {
+      // private mode
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    setGlowColor(null);
+    if (recentPack?.cover) {
+      getCoverColor(recentPack.cover).then((color) => {
+        if (!cancelled) setGlowColor(color);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [recentPack?.cover]);
 
   // typing #/me into the address bar of an open tab doesn't reload the page
   useEffect(() => {
@@ -180,33 +217,6 @@ export default function Library() {
 
   return (
     <div className="app-wrapper">
-      {!selectedPack && (
-        <header className="top-nav">
-          <div
-            className="brand-title"
-            onClick={handleBackToPacks}
-            style={{ cursor: 'pointer' }}
-            title="Return to library overview"
-          >
-            <span>NO LUV LIBRARY</span>
-          </div>
-
-          <div className="search-mini">
-            <Search size={14} className="search-mini-icon" />
-            <input
-              type="text"
-              className="search-mini-input"
-              placeholder="Search packs & sounds..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (selectedPack) setSelectedPack(null);
-              }}
-            />
-          </div>
-        </header>
-      )}
-
       {selectedPack ? (
         /* album / pack page view */
         <PackDetail
@@ -218,7 +228,59 @@ export default function Library() {
         />
       ) : (
         /* main packs catalogue view */
-        <>
+        <div className="library-index-page">
+          {recentPack && (
+            <div
+              className={`pack-glow is-${backdrop} ${glowColor ? 'is-visible' : ''}`}
+              style={{
+                ...(recentPack.cover && { '--glow-cover': `url(${JSON.stringify(recentPack.cover)})` }),
+                ...(glowColor && { '--glow-rgb': glowColor.join(', ') }),
+              }}
+              aria-hidden="true"
+            />
+          )}
+
+          <header className="top-nav">
+            <div
+              className="brand-title"
+              onClick={handleBackToPacks}
+              style={{ cursor: 'pointer' }}
+              title="Return to library overview"
+            >
+              <span>NO LUV LIBRARY</span>
+            </div>
+
+            <div className="top-nav-right">
+              <div className="search-mini">
+                <Search size={14} className="search-mini-icon" />
+                <input
+                  type="text"
+                  className="search-mini-input"
+                  placeholder="Search packs & sounds..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (selectedPack) setSelectedPack(null);
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={backdrop === 'minimal'}
+                className={`backdrop-toggle is-${backdrop}`}
+                onClick={toggleBackdrop}
+                title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the recent pack cover background'}
+                aria-label="Minimal background"
+              >
+                <span className="backdrop-toggle-knob" aria-hidden="true" />
+                <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
+                <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
+              </button>
+            </div>
+          </header>
+
           {loading && (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
               Loading packs...
@@ -246,7 +308,7 @@ export default function Library() {
               />
             ))}
           </section>
-        </>
+        </div>
       )}
 
       <footer className="site-note">

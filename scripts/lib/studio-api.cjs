@@ -29,10 +29,18 @@ const ROUTES = {
 
 // multipart endpoints: each receives the form fields, the uploaded files and the pack id
 const UPLOAD_ROUTES = {
-  '/upload-cover': (packId, files) => {
+  '/upload-cover': (packId, files, fields) => {
     const coverFile = Array.isArray(files.cover) ? files.cover[0] : files.cover;
     if (!coverFile) throw new Error('No cover file uploaded');
-    return manager.updatePackCover(packId, coverFile.filepath, coverFile.originalFilename);
+    const getVal = (val, def) => (Array.isArray(val) ? val[0] : val) ?? def;
+    const options = {
+      startTime: getVal(fields?.startTime, 0),
+      duration: getVal(fields?.duration, 4),
+      fps: getVal(fields?.fps, 15),
+      size: getVal(fields?.size, 480),
+      quality: getVal(fields?.quality, 75),
+    };
+    return manager.updatePackCover(packId, coverFile.filepath, coverFile.originalFilename, options);
   },
   '/upload-tracks': (packId, files) => {
     let trackFiles = files.tracks || files.file || [];
@@ -120,7 +128,7 @@ function handleUpload(req, res, handler) {
       if (err) throw err;
       const packId = Array.isArray(fields.packId) ? fields.packId[0] : fields.packId;
       if (!packId) throw new Error('packId is required');
-      sendJson(res, 200, await handler(packId, files));
+      sendJson(res, 200, await handler(packId, files, fields));
     } catch (handleErr) {
       sendJson(res, 500, { error: handleErr.message });
     } finally {

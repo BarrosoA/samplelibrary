@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const media = require('./media-store.cjs');
 
 const PUBLIC_TRACKS_PATH = path.resolve(__dirname, '../../public/tracks.json');
@@ -237,6 +237,60 @@ function encodePreviewAudio(inputFilePath) {
   }
 }
 
+// video formats supported for pack covers
+const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.avi'];
+
+function isVideoFile(filePath) {
+  const ext = path.extname(filePath || '').toLowerCase();
+  return VIDEO_EXTENSIONS.includes(ext);
+}
+
+// convert video clip to square animated webp for pack cover
+function convertVideoToCoverWebp(inputPath, options = {}) {
+  const startTime = Math.max(0, parseFloat(options.startTime) || 0);
+  const duration = Math.min(10, Math.max(0.5, parseFloat(options.duration) || 4));
+  const fps = Math.min(30, Math.max(10, parseInt(options.fps, 10) || 15));
+  const size = Math.min(800, Math.max(240, parseInt(options.size, 10) || 480));
+  const quality = Math.min(100, Math.max(40, parseInt(options.quality, 10) || 75));
+
+  const outPath = path.join(os.tmpdir(), `cover-${process.pid}-${Date.now()}.webp`);
+  const filter = `crop=min(iw\\,ih):min(iw\\,ih),scale=${size}:${size},fps=${fps}`;
+
+  try {
+    execFileSync(
+      'ffmpeg',
+      [
+        '-y',
+        '-ss',
+        String(startTime),
+        '-t',
+        String(duration),
+        '-i',
+        inputPath,
+        '-vf',
+        filter,
+        '-vcodec',
+        'libwebp',
+        '-lossless',
+        '0',
+        '-compression_level',
+        '4',
+        '-q:v',
+        String(quality),
+        '-loop',
+        '0',
+        '-an',
+        outPath,
+      ],
+      { stdio: 'pipe' }
+    );
+    return outPath;
+  } catch (err) {
+    if (fs.existsSync(outPath)) fs.rmSync(outPath, { force: true });
+    throw new Error(`failed to convert video cover: ${err.message}`);
+  }
+}
+
 const PEAK_COUNT = 100;
 
 // waveform for the player: PEAK_COUNT bar heights from 0 to 100, loudest bar = 100.
@@ -420,6 +474,20 @@ async function importPackFromStaging({ folderPath, packName, description }) {
     const destPath = path.join(IMAGES_DIR, destName);
     fs.copyFileSync(path.join(folderPath, coverFile), destPath);
     coverPath = `/images/${destName}`;
+  } else {
+    // fallback check for video cover in folder
+    const videoCoverFile = files.find((f) => isVideoFile(f));
+    if (videoCoverFile) {
+      const destName = `custom-${slug}.webp`;
+      const destPath = path.join(IMAGES_DIR, destName);
+      const converted = convertVideoToCoverWebp(path.join(folderPath, videoCoverFile), { duration: 4, fps: 15 });
+      try {
+        fs.copyFileSync(converted, destPath);
+        coverPath = `/images/${destName}`;
+      } finally {
+        if (fs.existsSync(converted)) fs.rmSync(converted, { force: true });
+      }
+    }
   }
 
   // find audio files
@@ -526,16 +594,35 @@ function createBlankPack({ name = 'UNTITLED PACK' } = {}) {
   return { success: true, pack: newPack };
 }
 
-function updatePackCover(packId, tempFilePath, originalFilename) {
+function updatePackCover(packId, tempFilePath, originalFilename, options = {}) {
   const data = loadCatalogue();
   const pack = (data.packs || []).find((p) => p.id === packId);
   if (!pack) throw new Error(`pack ${packId} not found`);
 
-  const ext = (path.extname(originalFilename || '') || '.png').toLowerCase();
-  const destName = `custom-${pack.id}-${Date.now()}${ext}`;
+  const rawExt = (path.extname(originalFilename || '') || '').toLowerCase();
+  const isVideo = isVideoFile(originalFilename || tempFilePath);
+
+  let finalTempPath = tempFilePath;
+  let finalExt = isVideo ? '.webp' : (rawExt || '.png');
+  let convertedTempPath = null;
+
+  if (isVideo) {
+    convertedTempPath = convertVideoToCoverWebp(tempFilePath, options);
+    finalTempPath = convertedTempPath;
+  }
+
+  const destName = `custom-${pack.id}-${Date.now()}${finalExt}`;
   const destPath = path.join(IMAGES_DIR, destName);
 
-  fs.copyFileSync(tempFilePath, destPath);
+  try {
+    fs.copyFileSync(finalTempPath, destPath);
+  } finally {
+    if (convertedTempPath && fs.existsSync(convertedTempPath)) {
+      try {
+        fs.rmSync(convertedTempPath, { force: true });
+      } catch (e) {}
+    }
+  }
 
   // remove previous custom cover if present
   if (pack.cover && pack.cover.startsWith('/images/custom-')) {
@@ -632,6 +719,8 @@ module.exports = {
   probeDuration,
   computePeaks,
   encodePreviewAudio,
+  convertVideoToCoverWebp,
+  isVideoFile,
   publishToGit,
 };
 

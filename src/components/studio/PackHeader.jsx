@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, HardDriveUpload, Camera, Loader2 } from 'lucide-react';
+import { Plus, Trash2, HardDriveUpload, Camera, Film, Loader2 } from 'lucide-react';
 import { postJson, postForm, hasDraggedFiles } from './studioUtils';
+import VideoCoverModal from './VideoCoverModal';
 
 // cover, click-to-edit title and description, and pack actions
 export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, notify, onChanged, onAddSamples, onDeletePack }) {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isCoverDragOver, setIsCoverDragOver] = useState(false);
+  const [videoFileForConversion, setVideoFileForConversion] = useState(null);
   const [isEditingTitle, setIsEditingTitle] = useState(autoEditTitle);
   const [titleValue, setTitleValue] = useState(pack.name || '');
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(pack.description || '');
   const coverInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   useEffect(() => {
     setTitleValue(pack.name || '');
@@ -35,6 +38,22 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
     } finally {
       setIsUploadingCover(false);
     }
+  };
+
+  const handleCoverFile = (file) => {
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(file.name);
+    const isImage = file.type.startsWith('image/') || /\.(png|jpg|jpeg|webp)$/i.test(file.name);
+
+    if (isVideo) {
+      setVideoFileForConversion(file);
+      return;
+    }
+    if (isImage) {
+      uploadCover(file);
+      return;
+    }
+    notify('Please select an image (PNG, JPG, WEBP) or video (MP4, WEBM, MOV)', 'error');
   };
 
   const saveTitle = async () => {
@@ -74,9 +93,20 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
         type="file"
         ref={coverInputRef}
         style={{ display: 'none' }}
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
         onChange={(e) => {
-          if (e.target.files && e.target.files[0]) uploadCover(e.target.files[0]);
+          if (e.target.files && e.target.files[0]) handleCoverFile(e.target.files[0]);
+          e.target.value = '';
+        }}
+      />
+
+      <input
+        type="file"
+        ref={videoInputRef}
+        style={{ display: 'none' }}
+        accept="video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) handleCoverFile(e.target.files[0]);
           e.target.value = '';
         }}
       />
@@ -97,10 +127,10 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
         onDrop={(e) => {
           e.preventDefault();
           setIsCoverDragOver(false);
-          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) uploadCover(e.dataTransfer.files[0]);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleCoverFile(e.dataTransfer.files[0]);
         }}
         onClick={() => coverInputRef.current?.click()}
-        title="Click or drag & drop image here to change cover"
+        title="Click or drag & drop image or video here to change cover"
       >
         <img src={pack.cover} alt={pack.name} className="studio-hero-art" />
         <div className="studio-cover-overlay">
@@ -109,7 +139,7 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
           ) : (
             <>
               <Camera size={16} />
-              <span>DRAG IMAGE</span>
+              <span>DRAG IMAGE / VIDEO</span>
             </>
           )}
         </div>
@@ -172,6 +202,15 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
             <span>{isUploadingAudio ? 'PROCESSING AUDIO...' : 'ADD SAMPLES'}</span>
           </button>
 
+          <button
+            className="studio-btn-subtle"
+            onClick={() => videoInputRef.current?.click()}
+            title="Upload and convert video (MP4/WebM) to animated pack cover"
+          >
+            <Film size={14} />
+            <span>VIDEO COVER</span>
+          </button>
+
           {pack.downloadUrl && (
             <a
               href={pack.downloadUrl}
@@ -190,6 +229,15 @@ export default function PackHeader({ pack, autoEditTitle, isUploadingAudio, noti
           </button>
         </div>
       </div>
+
+      <VideoCoverModal
+        file={videoFileForConversion}
+        pack={pack}
+        isOpen={Boolean(videoFileForConversion)}
+        onClose={() => setVideoFileForConversion(null)}
+        onSuccess={onChanged}
+        notify={notify}
+      />
     </div>
   );
 }

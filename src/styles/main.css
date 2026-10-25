@@ -1061,6 +1061,111 @@ a {
   animation: spin 1s linear infinite;
 }
 
+/* video cover converter modal */
+.video-preview-wrap {
+  width: 100%;
+  max-height: 220px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #262626;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.video-preview-player {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+}
+
+.video-meta-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(4px);
+}
+
+.video-controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.video-range-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.video-range-val {
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #fff;
+  background: #1e1e1e;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.modal-range {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #262626;
+  outline: none;
+  cursor: pointer;
+  accent-color: #ffffff;
+}
+
+.video-fps-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.video-fps-pill {
+  flex: 1;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  border: 1px solid #2b2b2b;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.video-fps-pill:hover:not(:disabled) {
+  border-color: #444;
+  color: #fff;
+}
+
+.video-fps-pill.is-active {
+  background: #2a2a2a;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.video-crop-notice {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -1912,6 +2017,9 @@ a {
     gap: 14px;
     margin-bottom: 22px;
   }
+  .top-nav-right {
+    width: 100%;
+  }
   .search-mini {
     width: 100%;
   }
@@ -2216,13 +2324,25 @@ a {
 }
 
 /* soft glow taken from the pack cover */
-.pack-detail-page {
+.pack-detail-page,
+.library-index-page {
   position: relative;
 }
 
-.pack-detail-page > *:not(.pack-glow) {
+.pack-detail-page > *:not(.pack-glow),
+.library-index-page > *:not(.pack-glow) {
   position: relative;
   z-index: 1;
+}
+
+.library-index-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.library-index-page .pack-glow.is-minimal::before {
+  display: none;
 }
 
 .pack-glow {

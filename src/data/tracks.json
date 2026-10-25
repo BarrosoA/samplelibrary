@@ -1,6 +1,41 @@
 {
   "packs": [
     {
+      "id": "pack-untitled-pack-8580",
+      "name": "Fado Rosa 2",
+      "cover": "/images/custom-pack-untitled-pack-8580-1792949944459.jpg",
+      "trackCount": 1,
+      "description": "Guitar samples inspired in the emotion of fado.",
+      "format": "WAV",
+      "license": "Royalty-Free",
+      "tracks": [
+        {
+          "id": "untitled-pack-8580-1-691",
+          "title": "holy @noluvmusic",
+          "bpm": 98,
+          "key": "A#m",
+          "instrument": "Master Sample",
+          "duration": 198.37,
+          "peaks": [48,89,77,63,70,97,94,85,87,79,97,91,73,65,76,84,100,76,70,77,93,89,77,69,83,90,16,6,60,0,59,81,70,62,78,77,3,0,60,3,57,48,40,40,49,82,45,55,42,62,62,1,0,59,3,42,56,12,8,46,41,14,59,1,35,35,14,5,0,0,0,0,60,1,0,0,35,42,42,62,55,52,80,50,61,34,1,60,0,0,62,64,53,36,33,64,54,50,47,41],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/fcab1c0550e65ad46762c69c.opus",
+          "master": {
+            "filename": "holy 98 A#min @noluvmusic.wav",
+            "size": 52488184,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/051a225e7c043482e2956323.0",
+              "https://musicportfolio-3na.pages.dev/m/051a225e7c043482e2956323.1",
+              "https://musicportfolio-3na.pages.dev/m/051a225e7c043482e2956323.2"
+            ]
+          },
+          "format": "WAV"
+        }
+      ],
+      "slug": "fado-rosa-2",
+      "oldSlugs": [
+        "untitled-pack"
+      ]
+    },
+    {
       "id": "pack-untitled-pack-7215",
       "name": "REGGAETON 001",
       "cover": "/images/custom-pack-untitled-pack-7215-1791612599758.jpg",
