@@ -2174,10 +2174,7 @@ a {
     height: 22px;
   }
   .studio-fab {
-    right: 16px;
-  }
-  .app-wrapper:has(.audio-player-bar) .studio-fab {
-    bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    display: none;
   }
 }
 
