@@ -224,13 +224,21 @@ function probeDuration(filePath) {
   }
 }
 
+// loudness-normalize preview to -14 LUFS so quiet samples are audible; master WAV left untouched
 function encodePreviewAudio(inputFilePath) {
   const outPath = path.join(os.tmpdir(), `preview-${process.pid}-${Date.now()}.opus`);
   try {
-    execSync(
-      `ffmpeg -y -i "${inputFilePath}" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
-      { stdio: 'pipe' }
-    );
+    try {
+      execSync(
+        `ffmpeg -y -i "${inputFilePath}" -af "loudnorm=I=-14:TP=-1.0:LRA=11" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
+        { stdio: 'pipe' }
+      );
+    } catch {
+      execSync(
+        `ffmpeg -y -i "${inputFilePath}" -c:a libopus -b:a 128k -vbr on "${outPath}"`,
+        { stdio: 'pipe' }
+      );
+    }
     return media.addPreview(outPath);
   } finally {
     fs.rmSync(outPath, { force: true });

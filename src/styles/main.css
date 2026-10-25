@@ -2341,8 +2341,16 @@ a {
   flex: 1;
 }
 
-.library-index-page .pack-glow.is-minimal::before {
+/* main page: fully black when minimal, no top gradient glow */
+.library-index-page .pack-glow.is-minimal {
   display: none;
+}
+
+/* main page: less blurry backdrop */
+.library-index-page .pack-glow::before {
+  filter: blur(28px) saturate(1.15);
+  transform: scale(1.08);
+  opacity: 0.22;
 }
 
 .pack-glow {

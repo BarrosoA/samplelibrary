@@ -2,9 +2,9 @@
   "packs": [
     {
       "id": "pack-untitled-pack-8580",
-      "name": "Fado Rosa 2",
+      "name": "Fado Vermelho",
       "cover": "/images/custom-pack-untitled-pack-8580-1792950762419.jpg",
-      "trackCount": 1,
+      "trackCount": 2,
       "description": "Guitar samples inspired in the emotion of fado.",
       "format": "WAV",
       "license": "Royalty-Free",
@@ -28,11 +28,32 @@
             ]
           },
           "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-8580-2-577",
+          "title": "park @noluvmusic",
+          "bpm": 116,
+          "key": "Am",
+          "instrument": "Master Sample",
+          "duration": 215.17,
+          "peaks": [91,74,69,95,85,75,75,84,82,75,68,100,76,76,68,86,70,66,70,98,71,74,68,84,74,62,78,85,70,69,62,5,0,0,0,0,0,45,70,69,64,57,85,65,73,56,33,1,0,45,0,0,35,58,36,9,30,45,0,0,46,0,58,56,13,45,50,45,10,8,0,0,45,58,39,28,68,38,43,23,39,0,0,45,16,29,31,36,35,32,42,41,18,30,39,21,45,29,50,27],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/6c2290545dae185a6c4342b3.opus",
+          "master": {
+            "filename": "park 116 Amin @noluvmusic.wav",
+            "size": 56934802,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.0",
+              "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.1",
+              "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.2"
+            ]
+          },
+          "format": "WAV"
         }
       ],
-      "slug": "fado-rosa-2",
+      "slug": "fado-vermelho",
       "oldSlugs": [
-        "untitled-pack"
+        "untitled-pack",
+        "fado-rosa-2"
       ]
     },
     {

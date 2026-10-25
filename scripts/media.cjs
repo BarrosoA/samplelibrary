@@ -117,17 +117,105 @@ function peaks() {
   console.log(`Added waveforms to ${added} sample(s).`);
 }
 
+// re-encodes previews with loudness normalization so quieter samples audition at standard volume
+async function normalize() {
+  const data = manager.loadCatalogue();
+  const { deploy } = media.ensureMediaDir();
+  const sources = media.readSources();
+
+  let normalized = 0;
+  const oldPreviews = [];
+
+  for (const pack of data.packs || []) {
+    for (const track of pack.tracks || []) {
+      const oldUrl = track.previewUrl;
+      const key = media.masterKey(track.master);
+      const sourceInfo = sources[key];
+      const sourcePath = sourceInfo && sourceInfo.path;
+
+      let tempMaster = null;
+      let inputPath = null;
+
+      try {
+        if (sourcePath && fs.existsSync(sourcePath)) {
+          inputPath = sourcePath;
+        } else if (track.master && track.master.parts && track.master.parts.length) {
+          const partFiles = track.master.parts.map((p) => {
+            const rel = media.relPathFromUrl(p);
+            return rel && path.join(deploy, rel);
+          });
+          const allExist = partFiles.every((f) => f && fs.existsSync(f));
+          if (allExist) {
+            if (partFiles.length === 1) {
+              inputPath = partFiles[0];
+            } else {
+              tempMaster = path.join(os.tmpdir(), `norm-master-${Date.now()}-${Math.random().toString(36).slice(2)}.wav`);
+              const outStream = fs.createWriteStream(tempMaster);
+              for (const pf of partFiles) {
+                outStream.write(fs.readFileSync(pf));
+              }
+              await new Promise((resolve) => outStream.end(resolve));
+              inputPath = tempMaster;
+            }
+          }
+        }
+
+        // fallback to existing preview if master source unavailable
+        if (!inputPath) {
+          const previewRel = media.relPathFromUrl(track.previewUrl);
+          const previewFile = previewRel && path.join(deploy, previewRel);
+          if (previewFile && fs.existsSync(previewFile)) {
+            inputPath = previewFile;
+          }
+        }
+
+        if (!inputPath) {
+          console.warn(`  skipped "${track.title}": no audio source found`);
+          continue;
+        }
+
+        console.log(`Normalizing preview: ${pack.name} / ${track.title}`);
+        const newPreviewUrl = manager.encodePreviewAudio(inputPath);
+        if (newPreviewUrl) {
+          if (newPreviewUrl !== oldUrl && oldUrl) {
+            oldPreviews.push({ previewUrl: oldUrl });
+          }
+          track.previewUrl = newPreviewUrl;
+          const newRel = media.relPathFromUrl(newPreviewUrl);
+          const newFile = newRel && path.join(deploy, newRel);
+          if (newFile && fs.existsSync(newFile)) {
+            track.peaks = manager.computePeaks(newFile) || track.peaks;
+          }
+          normalized++;
+        }
+      } catch (err) {
+        console.warn(`  skipped "${track.title}": ${err.message}`);
+      } finally {
+        if (tempMaster) fs.rmSync(tempMaster, { force: true });
+      }
+    }
+  }
+
+  manager.saveCatalogue(data);
+  if (oldPreviews.length) {
+    media.retireTracks(oldPreviews, data);
+  }
+  console.log(`\nNormalized ${normalized} preview(s).`);
+  console.log('Master WAV files remain untouched.');
+}
+
 const commands = {
   migrate,
   rebase,
   adopt,
   peaks,
+  normalize,
   deploy: () => console.log(media.deploy({ catalogue: manager.loadCatalogue(), force: process.argv.includes('--force') }).message),
 };
 
 const cmd = commands[process.argv[2]];
 if (!cmd) {
-  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase|adopt|peaks> [--force]');
+  console.log('Usage: node scripts/media.cjs <migrate|deploy|rebase|adopt|peaks|normalize> [--force]');
   process.exit(1);
 }
 Promise.resolve()

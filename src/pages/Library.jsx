@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, FolderKanban, Image, Droplet } from 'lucide-react';
+import { Search, FolderKanban, Image, ImageOff } from 'lucide-react';
 import { readOwnerFlag, STUDIO_LINK } from '../utils/owner';
-import { getCoverColor } from '../utils/coverColor';
 import PackCard from '../components/PackCard';
 import PackDetail from './PackDetail';
 import AudioPlayer from '../components/AudioPlayer';
@@ -26,7 +25,6 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOwner, setIsOwner] = useState(readOwnerFlag);
   const [backdrop, setBackdrop] = useState(readBackdrop);
-  const [glowColor, setGlowColor] = useState(null);
 
   const recentPack = data.packs && data.packs.length > 0 ? data.packs[0] : null;
 
@@ -39,19 +37,6 @@ export default function Library() {
       // private mode
     }
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    setGlowColor(null);
-    if (recentPack?.cover) {
-      getCoverColor(recentPack.cover).then((color) => {
-        if (!cancelled) setGlowColor(color);
-      });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [recentPack?.cover]);
 
   // typing #/me into the address bar of an open tab doesn't reload the page
   useEffect(() => {
@@ -231,11 +216,8 @@ export default function Library() {
         <div className="library-index-page">
           {recentPack && (
             <div
-              className={`pack-glow is-${backdrop} ${glowColor ? 'is-visible' : ''}`}
-              style={{
-                ...(recentPack.cover && { '--glow-cover': `url(${JSON.stringify(recentPack.cover)})` }),
-                ...(glowColor && { '--glow-rgb': glowColor.join(', ') }),
-              }}
+              className={`pack-glow is-${backdrop} ${backdrop === 'textured' ? 'is-visible' : ''}`}
+              style={recentPack.cover ? { '--glow-cover': `url(${JSON.stringify(recentPack.cover)})` } : undefined}
               aria-hidden="true"
             />
           )}
@@ -271,12 +253,12 @@ export default function Library() {
                 aria-checked={backdrop === 'minimal'}
                 className={`backdrop-toggle is-${backdrop}`}
                 onClick={toggleBackdrop}
-                title={backdrop === 'textured' ? 'Switch to a minimal background' : 'Switch to the recent pack cover background'}
-                aria-label="Minimal background"
+                title={backdrop === 'textured' ? 'Switch to solid black background' : 'Switch to recent pack backdrop'}
+                aria-label="Toggle backdrop"
               >
                 <span className="backdrop-toggle-knob" aria-hidden="true" />
                 <Image size={11} className="backdrop-toggle-icon is-textured" aria-hidden="true" />
-                <Droplet size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
+                <ImageOff size={11} className="backdrop-toggle-icon is-minimal" aria-hidden="true" />
               </button>
             </div>
           </header>

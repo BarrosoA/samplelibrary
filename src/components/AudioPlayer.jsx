@@ -9,6 +9,16 @@ const WAVE_BAR_PITCH = 3;
 // ears hear loudness logarithmically, so a squared curve makes the slider position match how loud it sounds
 const sliderGain = (v) => v * v;
 
+const VOLUME_KEY = 'samplelibrary-volume';
+const readSavedVolume = () => {
+  try {
+    const v = parseFloat(localStorage.getItem(VOLUME_KEY));
+    return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.75;
+  } catch {
+    return 0.75;
+  }
+};
+
 // mirrored bars from the catalogue's peaks; bars up to the playhead turn white.
 // real elements rather than a stretched svg, so the rounded ends stay round at any width
 function Waveform({ peaks, percent }) {
@@ -60,7 +70,7 @@ export default function AudioPlayer({
 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.25);
+  const [volume, setVolume] = useState(readSavedVolume);
   const [isMuted, setIsMuted] = useState(false);
   const [downloadState, setDownloadState] = useState('idle');
 
@@ -107,12 +117,18 @@ export default function AudioPlayer({
       }
     };
 
+    // in local studio development, stream from the dev server to audition local normalized previews
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const targetSrc = isLocalDev && currentTrack.previewUrl
+      ? `/api/manage/preview-audio?url=${encodeURIComponent(currentTrack.previewUrl)}`
+      : currentTrack.previewUrl;
+
     // cloudflare ignores Range requests, so without the service worker (first visit, hard reload) the
     // browser can't find the length or seek; a fully downloaded copy can do both
-    if (navigator.serviceWorker?.controller) {
-      start(currentTrack.previewUrl);
+    if (navigator.serviceWorker?.controller || isLocalDev) {
+      start(targetSrc);
     } else {
-      fetch(currentTrack.previewUrl)
+      fetch(targetSrc)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.blob();
@@ -122,7 +138,7 @@ export default function AudioPlayer({
           objectUrl = URL.createObjectURL(blob);
           start(objectUrl);
         })
-        .catch(() => !cancelled && start(currentTrack.previewUrl));
+        .catch(() => !cancelled && start(targetSrc));
     }
 
     return () => {
@@ -292,7 +308,11 @@ export default function AudioPlayer({
               step="0.01"
               value={isMuted ? 0 : volume}
               onChange={(e) => {
-                setVolume(parseFloat(e.target.value));
+                const nextVol = parseFloat(e.target.value);
+                setVolume(nextVol);
+                try {
+                  localStorage.setItem(VOLUME_KEY, String(nextVol));
+                } catch {}
                 if (isMuted) setIsMuted(false);
               }}
               className="volume-slider"

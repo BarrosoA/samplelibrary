@@ -7,8 +7,75 @@ const formidable = typeof formidablePkg === 'function' ? formidablePkg : (formid
 
 const AUDIO_TYPES = { '.wav': 'audio/wav', '.aif': 'audio/aiff', '.aiff': 'audio/aiff', '.flac': 'audio/flac', '.opus': 'audio/ogg' };
 
+// watchdog tracks studio manager activity and auto-stops server when closed
+const WATCHDOG_TIMEOUT_MS = 25000;
+const STARTUP_GRACE_MS = 30000;
+const GOODBYE_GRACE_MS = 5000;
+
+const watchdog = global.__studioWatchdogState || (global.__studioWatchdogState = {
+  lastHeartbeat: 0,
+  hasConnected: false,
+  goodbyeTimer: null,
+  timer: null,
+  startTime: Date.now(),
+});
+
+function ensureWatchdog() {
+  if (watchdog.timer) return;
+  watchdog.timer = setInterval(() => {
+    if (process.env.STUDIO_NO_AUTO_EXIT === '1') return;
+
+    const now = Date.now();
+    if (watchdog.hasConnected) {
+      if (now - watchdog.lastHeartbeat > WATCHDOG_TIMEOUT_MS) {
+        clearInterval(watchdog.timer);
+        watchdog.timer = null;
+        console.log('\n[studio] no heartbeat received; studio tab closed, stopping server');
+        process.exit(0);
+      }
+    } else if (process.env.STUDIO_AUTO_EXIT === '1') {
+      if (now - watchdog.startTime > STARTUP_GRACE_MS) {
+        clearInterval(watchdog.timer);
+        watchdog.timer = null;
+        console.log('\n[studio] no browser session connected within startup grace period; stopping server');
+        process.exit(0);
+      }
+    }
+  }, 2000);
+  if (watchdog.timer.unref) watchdog.timer.unref();
+}
+
+if (process.env.STUDIO_AUTO_EXIT === '1') {
+  ensureWatchdog();
+}
+
+function handleHeartbeat() {
+  watchdog.lastHeartbeat = Date.now();
+  watchdog.hasConnected = true;
+  if (watchdog.goodbyeTimer) {
+    clearTimeout(watchdog.goodbyeTimer);
+    watchdog.goodbyeTimer = null;
+  }
+  ensureWatchdog();
+  return { ok: true };
+}
+
+function handleGoodbye() {
+  if (!watchdog.hasConnected) return { ok: true };
+  if (!watchdog.goodbyeTimer) {
+    watchdog.goodbyeTimer = setTimeout(() => {
+      console.log('\n[studio] studio session closed in browser; stopping server');
+      process.exit(0);
+    }, GOODBYE_GRACE_MS);
+    if (watchdog.goodbyeTimer.unref) watchdog.goodbyeTimer.unref();
+  }
+  return { ok: true };
+}
+
 // json endpoints: each receives the parsed request body
 const ROUTES = {
+  '/heartbeat': () => handleHeartbeat(),
+  '/goodbye': () => handleGoodbye(),
   '/create-pack': (p) => manager.createBlankPack(p),
   '/update-pack': (p) => manager.updatePack(p.packId, p.updates),
   '/delete-pack': (p) => manager.deletePack(p.packId),

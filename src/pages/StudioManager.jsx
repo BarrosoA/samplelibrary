@@ -70,6 +70,32 @@ export default function StudioManager() {
     fetchDownloads();
   }, [fetchDownloads]);
 
+  // keep local server alive while studio tab is open
+  useEffect(() => {
+    const ping = () => {
+      fetch('/api/manage/heartbeat', { method: 'POST' }).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 4000);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ping();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    const onLeave = () => {
+      fetch('/api/manage/goodbye', { method: 'POST', keepalive: true }).catch(() => {});
+    };
+    window.addEventListener('pagehide', onLeave);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('pagehide', onLeave);
+      onLeave();
+    };
+  }, []);
+
   const handlePublished = () => {
     fetchStorage();
     fetchDownloads();

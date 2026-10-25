@@ -14,7 +14,8 @@
     "media:deploy": "node scripts/media.cjs deploy",
     "media:rebase": "node scripts/media.cjs rebase",
     "media:adopt": "node scripts/media.cjs adopt",
-    "media:peaks": "node scripts/media.cjs peaks"
+    "media:peaks": "node scripts/media.cjs peaks",
+    "media:normalize": "node scripts/media.cjs normalize"
   },
   "dependencies": {
     "client-zip": "^2.5.1",

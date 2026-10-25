@@ -11,11 +11,12 @@ if %errorlevel%==0 (
 
 echo Starting local Studio Manager...
 echo.
-echo Close this window at any time to stop the server.
+echo The server will stop automatically when Studio Manager is closed in the browser.
 echo.
 
 :: open browser after a brief delay so server has time to bind
 start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:5173/#/manage"
 
-:: run local vite dev server
+:: run local vite dev server with auto-exit enabled
+set STUDIO_AUTO_EXIT=1
 npm.cmd run dev
