@@ -4,7 +4,7 @@
       "id": "pack-untitled-pack-8580",
       "name": "Fado Vermelho",
       "cover": "/images/custom-pack-untitled-pack-8580-1792950762419.jpg",
-      "trackCount": 2,
+      "trackCount": 3,
       "description": "Guitar samples inspired in the emotion of fado.",
       "format": "WAV",
       "license": "Royalty-Free",
@@ -45,6 +45,24 @@
               "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.0",
               "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.1",
               "https://musicportfolio-3na.pages.dev/m/95c64d182d6d7652353b2a6c.2"
+            ]
+          },
+          "format": "WAV"
+        },
+        {
+          "id": "untitled-pack-8580-3-619",
+          "title": "sc596 sample siarbeats x noluv",
+          "bpm": 110,
+          "key": "Am",
+          "instrument": "Master Sample",
+          "duration": 107.26,
+          "peaks": [17,26,53,43,45,44,43,39,47,49,50,30,41,42,35,31,41,41,82,77,85,84,66,54,64,53,83,84,78,75,71,69,71,67,50,46,42,32,31,31,38,41,45,42,42,35,29,30,30,34,55,91,74,100,81,58,53,70,53,91,75,78,68,77,56,83,57,52,55,39,27,38,42,49,41,56,51,43,30,37,40,46,37,48,46,43,32,31,31,42,41,47,40,40,35,30,29,33,33,34],
+          "previewUrl": "https://musicportfolio-3na.pages.dev/p/6c03af6454bd11db5e21c3d7.opus",
+          "master": {
+            "filename": "sc596_110bpm_amin_sample_siarbeats_x_noluv.wav",
+            "size": 18920088,
+            "parts": [
+              "https://musicportfolio-3na.pages.dev/m/ce495c03e80d71e41a92fac8.0"
             ]
           },
           "format": "WAV"
